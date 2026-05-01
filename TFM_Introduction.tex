@@ -1,0 +1,25 @@
+\chapter{Introduction}~\label{chapIntroduction}
+
+This report will cover the development of numerical tools for the resolution of Convection-Diffusion problems while consolidating the knowledge related to the transport phenomena, and the application of numerical methods for their resolution. The models implemented in this project will use a finite volume method to discretize the analyzed domain. In addition, the goal of this project implies the development of a robust and versatile code structure to ensure the models can be easily applied to any problem configuration. This chapter will introduce the main concepts related to the governing equations and the discretization method. Furthermore, the development of the models will be separated into a first portion focused on a pure diffusion model, and a second one implementing the complete convection-diffusion model. The code structure will be explained within each model implementation as a reflection of the evolution of the model throughout the development of this project.
+
+When studying transport phenomena, there are two main mechanisms that govern the propagation of a transport variable $\phi$. These are known as \textbf{Convection} and \textbf{Diffusion}, and classify the phenomena depending on what causes the transport of the transport variable $\phi$. Diffusion refers to transport caused by molecular movement within the body, while Convection refers to transport caused by bulk movement of the body. The governing transport equation for this phenomena is given by Eq.~\ref{eqTransGov}, where each element can be discretized as shown in Eqs.~\ref{eqTransAcc}, ~\ref{eqTransConv}, ~\ref{eqTransDiff}. The discretization considers a rectangular prism control volume and is done considering a 2D mesh, keeping in mind that the 1D case ignores the elements for south and north neighbors. This discretization model will be the basis for the implementation shown in the following chapters, with appropriate clarifications for the nature of $\phi$ in each case.
+
+\begin{equation} \label{eqTransGov}
+    \rho \frac{\partial \phi}{\partial t} + \nabla (\rho v \phi) = \Gamma \nabla \phi + S_{\phi}
+\end{equation}
+
+\begin{equation}~\label{eqTransAcc}
+	\rho \frac{\partial \phi}{\partial t} = \rho \frac{\phi_P - \phi^0_P}{\Delta t}
+\end{equation}
+
+\begin{equation}~\label{eqTransConv}
+	\nabla (\rho v \phi) = \rho (v_W \phi_W S_W - v_E \phi_E S_E + v_S \phi_S S_S - v_N \phi_N S_N)
+\end{equation}
+
+\begin{equation}~\label{eqTransDiff}
+	\Gamma \nabla \phi = \Gamma_W \frac{\phi_W - \phi_P}{d_{PW}} - \Gamma_E \frac{\phi_P - \phi_E}{d_{PE}} + \Gamma_S \frac{\phi_S - \phi_P}{d_{PS}} - \Gamma_N \frac{\phi_P - \phi_N}{d_{PN}}
+\end{equation}
+
+
+
+{\color{red} Is this too simplified? Should I include the integration process?}

@@ -1,0 +1,133 @@
+\section{1D Transient Conduction Case}~\label{secDiffusion1D}
+In this section, the implementation of a C++ code for the resolution of a one-dimensional transient-state heat conduction model is described. The model works using a configuration file that includes multiple parameters that define the simulation. A summary of all the different parameters included in the file is shown in Table~\ref{tabDiffConfig1D}. As shown in the table, the configuration parameters have been separated into different groups. Using this model, a study will be made that analyzes the effect different parameters can have on resolution and performance. The main focus of this study will be to analyze the effect of some of the numerical parameters.
+
+\begin{table}[ht]
+	\centering
+	\begin{tabular}{|l|c|p{0.5\linewidth}|}
+		\hline
+		Group & Parameter & Description \\
+		\hline
+		\multirow{3}{*}{Physical Data} & T0 & Initial value for temperature map. \\
+					       & \multirow{2}{*}{materials} & List of vectors with thermophysical properties corresponding to each material. \\
+		\hline
+		\multirow{6}{*}{Geometrical Data} & width & Dimension in secondary axis. \\
+					          & height & Dimension in secondary axis. \\
+						  & \multirow{4}{*}{sections} & List of vectors indicating the distribution of materials in the simulation. Also includes amount of nodes and internal heat generation. \\
+		\hline
+		\multirow{7}{*}{Numerical Data} & scheme & Scheme for simulation. \\
+					     & solver & Solver algorithm for simulation. \\
+					     & maxIterations & Limit of iterations per timestep. \\
+					     & endTime & Last instant of the simulation. \\
+					     & timeStep & Time increment after each instant. \\
+					     & tolNumeric & Tolerance for numerical solver. \\
+					     & tolTemporal & Tolerance for steady-state convergence. \\
+		\hline
+		\multirow{5}{*}{Mesh Data} & meshAlgorithm & Algorithm for mesh generation. \\
+					   & strength & Cubic algebraic mesh parameter. \\
+					   & centering & Cubic algebraic mesh parameter. \\
+					   & kappa & Power law mesh parameter. \\
+					   & delta & Hyperbolic tangent mesh parameter. \\
+		\hline
+		\multirow{2}{*}{Boundary Data} & \multirow{2}{*}{boundaries} & List of vectors describing the boundary conditions on each side. \\
+		\hline
+	\end{tabular}
+	\caption{Configuration file structure.}
+	\label{tabDiffConfig1D}
+\end{table}
+
+\textbf{Physical} includes the initial temperature and a list of the available materials and their thermophysical properties. \textbf{Geometrical} includes the geometric parameters; the model can only support rectangular shapes in this implementation and changes will be made when more complex geometries are studied. Sections must be defined with a material, the number of nodes for that specific section $N_s$, beginning and ending coordinates $x_0$ and $x_1$, and internal heat generation $q_V$. \textbf{Numerical} includes the numerical parameters; the model currently has both the Gauss-Seidel (GS) and Conjugate Gradient (CG) solvers implemented and both will be compared as a first step before performing the relevant studies discussed ahead. \textbf{Mesh} includes the option to choose from four different algorithms, as well as all relevant parameters for each of these alternatives. \textbf{Boundary Conditions} includes an array describing the boundaries for the model and can currently support Dirichlet, Neumann, and Convection boundary conditions. In addition, it supports variable temperatures for Dirichlet boundary conditions.
+
+\subsection{Solver Comparison}
+As mentioned above, the model described in this report has both GS and CG solvers implemented. Only one will be used to perform the numerical parameter studies shown below; as such, relevant metrics need to be determined to compare both solvers. For this purpose, the number of iterations and residues for each time step will be used to compare both solutions. The base simulation used in this study will follow the case described in \textit{Exercise 1: 1D transient conduction case}, with the addition of an internal heat source for a better comparison with the steady-state analytical solution.
+
+This simulation will use $N = 100$, $\Delta t = 0.5$ and a Crank-Nicolson scheme with a uniform mesh. The results for both cases are shown in Figure \ref{figDiffCompSolver}. In both metrics, it can be seen that CG outperforms GS by a considerable margin; converging faster and obtaining lower residue. As such, CG will be used as the linear solver for the following studies. In addition, the computation time was also slightly faster for CG compared to GS with a total of $0.60$ and $0.77$ seconds, respectively; although this is the least relevant comparison.
+
+\begin{figure}[ht]
+    \begin{tabular}{cc}
+        \includegraphics[width=0.45\linewidth]{Chapter1/Media/SolverComparisonIterations.png} & \includegraphics[width=0.45\linewidth]{Chapter1/Media/SolverComparisonResidue.png} \\
+        \textit{Iterations} & \textit{Residue} \\
+    \end{tabular}
+    \caption{\textit{Solver comparisons.}}
+    \label{figDiffCompSolver}
+\end{figure}
+
+\subsection{Numerical Parameters Study}
+For this test, the time step $\Delta t$ and the number of nodes $N$ are modified to analyze the number of iterations and compare them with the analytical solution. Both parameters will be independently swept across their respective range of values, while keeping the other parameter at a constant value. A summary of the values for each one of these parameters is shown in Table \ref{tabDiffNumerical1D}, highlighting the values used for the base case. In addition, the explicit scheme has an imposed limit for the value of $\Delta t$ to ensure convergence, given by the expression shown in Eq.~\ref{eqDifftExplicit1D}.
+
+\begin{table}[ht]
+    \centering
+    \begin{tabular}{|c|c|}
+        \hline
+        Parameter & Values \\
+        \hline
+        $\Delta t$ & 0.1, \textbf{0.5}, 1.0, 2.0, 5.0 \\
+        $N$ & 50, \textbf{100}, 200, 400 \\
+        \hline
+    \end{tabular}
+    \caption{\textit{Detail of numerical parameters to be studied.}}
+    \label{tabDiffNumerical1D}
+\end{table}
+
+\begin{equation}
+    \label{eqDifftExplicit1D}
+    \Delta t_{max} = \frac{\Delta x^2}{\alpha}
+\end{equation}
+
+\subsubsection{$\Delta t$ Sweep}
+The results obtained from the tests explained above are shown in Figure \ref{figDiffResults1DA}. As expected, the number of iterations remains unchanged for the explicit scheme, as it is meant to be a direct calculation. On the other hand, both the crank-nicolson and implicit schemes require more iterations per time step as it increases. Compared to the analytical solution, the explicit scheme shows a significant error for $0.1 < \Delta t$, while a small increase could be seen for the crank-nicolson and implicit schemes. Overall, the crank-nicolson scheme has shown better performance in terms of number of iterations needed and precision compared to the analytical solution. Furthermore, the results for explicit seem to stagnate at a constant value after the lowest time step value tested, suggesting that the limit set by Eq. \ref{eqDifftExplicit1D} has been exceeded. However, the high error suggests that that expression should be revised for a more conservative estimation. The computation time is seen to be similar between the crank-nicolson and implicit schemes, with a small advantage for the implicit scheme.
+
+\begin{figure}[ht]
+    \begin{tabular}{cc}
+        \includegraphics[width=0.45\linewidth]{Chapter1/Media/tSweepIterations.png} & \includegraphics[width=0.45\linewidth]{Chapter1/Media/tSweepAnalytical.png} \\
+        \includegraphics[width=0.45\linewidth]{Chapter1/Media/tSweepTime.png} & \includegraphics[width=0.45\linewidth]{Chapter1/Media/tSweepResidue.png} \\
+    \end{tabular}
+    \caption{\textit{$\Delta t$ sweep results.}}
+    \label{figDiffResults1DA}
+\end{figure}
+
+{\color{red} No me gusta como se ve el subsubsection, cambiar la función para que deje un espacio después del título como en section (pero sin numerar)}
+
+\subsubsection{$N$ Sweep}
+The results obtained for the tests explained above are shown in Figure \ref{figDiffResults1DB}. Similarly to the previous case, the explicit scheme is a direct calculation and does not require more iterations. In addition, showing an increase in the number of iterations for the crank-nicolson and implicit schemes, suggesting better performance for crank-nicolson as the mesh gets finer. Compared to the analytical solution, the explicit scheme still showed higher values compared to the crank-nicolson and implicit schemes; however, it seems to get closer as the number of nodes increases. In terms of computation time, both the crank-nicolson and implicit schemes saw a slight increase, while the explicit scheme saw a major difference as the mesh got finer.
+
+\begin{figure}[ht]
+    \begin{tabular}{cc}
+        \includegraphics[width=0.45\linewidth]{Chapter1/Media/NSweepIterations.png} & \includegraphics[width=0.45\linewidth]{Chapter1/Media/NSweepAnalytical.png} \\
+        \includegraphics[width=0.45\linewidth]{Chapter1/Media/NSweepTime.png} & \includegraphics[width=0.45\linewidth]{Chapter1/Media/NSweepResidue.png} \\
+    \end{tabular}
+    \caption{\textit{$N$ sweep results.}}
+    \label{figDiffResults1DB}
+\end{figure}
+
+\begin{table}[ht]
+    \centering
+    \begin{tabular}{|c|c|}
+        \hline
+        Case & Boundary Conditions \\
+        \hline
+        1 & Neumann-Dirichlet \\
+        2 & Convection-Dirichlet \\
+        3 & Dirichlet-Neumann \\
+        4 & Dirichlet - Convection \\
+        5 & $T_{(t)} = 100 + 50 \cos \left( \frac{0.01 t}{5 \pi} \right)$ \\
+        \hline
+    \end{tabular}
+    \caption{\textit{Cases for validation.}}
+    \label{tabDiff1DBoundaryCases}
+\end{table}
+
+\subsection{Model Validation}
+In addition to the Dirichlet boundary condition established in the problem statement, Neumann and Convection boundary conditions have also been implemented in the model. Furthermore, support for variable temperatures for Dirichlet boundary conditions was implemented. To validate this implementation, a comparison will be made with the analytical solution for a steady-state scenario with the transient-state model once it reaches equilibrium. A summary of the pairs of boundary conditions used for the tests is shown in Table \ref{tabDiff1DBoundaryCases}, while comparisons with the steady state solution are shown in Figure \ref{figDiff1DAnalSol}. An additional case is included to test the proper implementation of the variable temperature Dirichlet boundary condition. As shown, all pairs evaluated accurately matched the analytical solution. Furthermore, the configuration file can now provide mathematical expressions instead of constant values when defining Dirichlet boundary conditions, as shown by the temperature profile. This capability can now easily be scaled up towards other functions in the model.
+
+\begin{figure}[ht]
+    \begin{tabular}{cc}
+        \includegraphics[width=0.45\linewidth]{Chapter1/Media/BoundaryND.png} & \includegraphics[width=0.45\linewidth]{Chapter1/Media/BoundaryCD.png} \\
+        \textit{Case 1} & \textit{Case 2} \\
+        \includegraphics[width=0.45\linewidth]{Chapter1/Media/BoundaryDN.png} & \includegraphics[width=0.45\linewidth]{Chapter1/Media/BoundaryDC.png} \\
+        \textit{Case 3} & \textit{Case 4} \\
+        \multicolumn{2}{c}{\includegraphics[width=0.5\linewidth]{Chapter1/Media/BoundaryVD.png}} \\
+        \multicolumn{2}{c}{\textit{Case 5}} \\
+    \end{tabular}
+    \caption{\textit{Comparison of model results with analytical solutions and implementation of mathematical expression reading for Dirichlet boundary condition.}}
+    \label{figDiff1DAnalSol}
+\end{figure}

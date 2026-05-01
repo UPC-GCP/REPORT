@@ -1,0 +1,42 @@
+\documentclass{cttc-thesis}
+\usepackage{cttc-design}
+% \usepackage{gnuplot-lua-tikz}
+% \input{source-conde-conf} % Typeset code
+
+% Imports
+\usepackage{multicol}
+\usepackage{multirow}
+\usepackage{parskip}
+
+\begin{document}
+
+% Title
+%\include{TFM_Title}
+% PENDING:
+% CHECK \titol FUNCTION AND MODIFY/REMAKE IT SO IT FITS THE TFM FORMATTING WHEN YOU KNOW WHAT THAT SHOULD LOOK LIKE (cttc-thesis.cls ln:339)
+% Probably better to create \titloTFM or something to not 
+
+% Foreword
+\input{TFM_Foreword.tex}
+
+% Body
+\mainmatter{}
+\include{TFM_Introduction}
+\input{Chapter1/TFM_Diffusion}
+%\input{Chapter2/TFM_Convection}
+
+
+
+
+
+% HAVEN'T DONE THIS YET
+% \appendix
+% \include{app1/app1}
+
+% \refstepcounter{chapter}
+% \include{nomenclature}
+
+% \bibliographystyle{unsrt}
+% \bibliography{mybiblio}
+
+\end{document}

@@ -1,0 +1,102 @@
+\section{2D Transient Conduction Case}~\label{secDiffusion2D}
+In this section, the implementation of a C++ code for the resolution of a two-dimensional transient state heat conduction model is described. This model has several modifications compared to the previous one, mainly reflected in the format for the configuration file. Table~\ref{tabConfig2D} summarizes the new parameters accepted in the configuration file. As shown, probes have now been added as a configurable parameter to allow the user to choose which data is being saved. In addition, refinement can now be defined independently for each axis and in separate regions to allow the user better control over the mesh. Furthermore, a Medic class was also included to handle diagnostics and validation of energy conservation in the system. This class is also used as the central tool for debugging as it can easily be modified to log any information relevant to the model.
+
+\begin{table}[ht]
+	\centering
+	\begin{tabular}{|l|c|p{0.5\linewidth}|}
+		\hline
+		Group & Parameter & Description \\
+		\hline
+		\multirow{7}{*}{Numerical Data} & scheme & Scheme selection for simulation. \\
+			       & solver & Solver algorithm for simulation. \\
+			       & tolNumeric & Tolerance for the numerical solver. \\
+			       & tolTemporal & Tolerance for the steady-state convergence. \\
+			       & maxIterations & Limit of iterations per timestep. \\
+			       & endTime & Last instant of the simulation. \\
+			       & timeStep & Time increment after each instant. \\
+		\hline
+		\multirow{3}{*}{Physical Data} & T0 & Initial value for temperature map. \\
+					       & \multirow{2}{*}{materials} & List of vectors with thermophysical properties corresponding to each material. \\
+		\hline
+		\multirow{5}{*}{Geometrical Data} & width & Dimension in the secondary axis. \\
+						  & \multirow{4}{*}{sections} & List of vectors indicating the distribution of materials in the simulation. Also includes amount of nodes and internal heat generation. \\
+		\hline
+		\multirow{9}{*}{Mesh Data} & strength & Cubic algebraic mesh parameter. \\
+					   & centering & Cubic algebraic mesh parameter. \\
+					   & kappa & Power law mesh parameter. \\
+					   & delta & Hyperbolic tangent mesh parameter. \\
+					   & meshAlgorithm & Algorithm for mesh generation. \\
+					   & \multirow{2}{*}{N} & List specifying total number of nodes for each axis. \\
+					   & \multirow{2}{*}{refinement} & List of vectors specifying refinement configuration for each axis. \\
+		\hline
+		\multirow{2}{*}{Boundary Data} & \multirow{2}{*}{boundaries} & List of vectors specifying the boundary conditions on each side. \\
+		\hline
+		\multirow{2}{*}{Probe Data} & \multirow{2}{*}{probes} & List of vectors specifying the probes configured for the simulation. \\
+		\hline
+	\end{tabular}
+	\caption{Configuration file structure.}
+	\label{tabConfig2D}
+\end{table}
+
+\subsection{Numerical Parameter Study}
+For this test, timestep $\Delta t$ and number of nodes $N$ are modified to analyze their impact on the number of iterations and total residue. Both parameters will be independently swept across teir respective range of values while keeping the other parameter at a constant value. A summary of the values for each of these parameters is shown in Table \ref{tabDiffNumerical2D}, highlighting the values used for the base case. In addition, the explicit scheme still requires an imposed limit for the value of $\Delta t$, however the expression for the 2D case changes as described by Eq. \ref{eqDiffExplicit2D}. Contrary to the results shown for the 1D case, there will be no comparison of error with the analytical solution or computation time. This study numerical parameter study will focus on comparing the number of iterations and total residue.
+
+\begin{table}[ht]
+	\centering
+	\begin{tabular}{|c|c|}
+		\hline
+		Parameter & Values \\
+		\hline
+		$\Delta t$ & 0.1, 0.5, \textbf{1.0}, 2.0, 5.0 \\
+		$N$ & 50, \textbf{100}, 200, 400 \\
+		\hline
+	\end{tabular}
+	\caption{Value ranges for numerical parameter study.}
+	\label{tabDiffNumerical2D}
+\end{table}
+
+\begin{equation}
+	\label{eqDiffExplicit2D}
+\Delta t_{max} = \frac{\Delta x^2 \Delta y^2}{2 \alpha (\Delta x^2 + \Delta y^2)}
+\end{equation}
+
+\subsubsection{$\Delta t$ Study}
+The results obtained from the tests explained above are shown in Figure \ref{figDiffResults2DA}. PENDING FROM HERE As shown, the number of iterations and total residue follow a similar trend to the one seen in the 1D case. As well as having a clear inflection for the explicit scheme when the timestep becomes limited due to the configuration parameters. PENDING COMMENTS ABOUT SCHEME
+
+\begin{figure}[ht]
+	\begin{tabular}{cc}
+		\includegraphics[width=0.45\linewidth]{Chapter1/Media/PLACEHOLDER.png} & \includegraphics[width=0.45\linewidth]{Chapter1/Media/PLACEHOLDER.png} \\
+	\end{tabular}
+	\caption{$\Delta t$ sweep results.}
+	\label{figDiffResults2DA}
+\end{figure}
+
+\subsubsection{$N$ Study}
+The results obtained from the tests explained above are shown in Figure \ref{figDiffResults2DB}. Similar to the previous test, the presented plots follow a similar trend to the ones discused above, showing an increase in number of iterations and residue for all three schemes....... PENDING
+
+\begin{figure}[ht]
+	\begin{tabular}{cc}
+		\includegraphics[width=0.45\linewidth]{Chapter1/Media/PLACEHOLDER.png} & \includegraphics[width=0.45\linewidth]{Chapter1/Media/PLACEHOLDER.png} \\
+	\end{tabular}
+	\caption{$\Delta N$ sweep results.}
+	\label{figDiffResults2DB}
+\end{figure}
+
+\subsection{Model Validation}
+In the same way as done in Section \ref{secDiffusion1D}, boundary conditions were independently analyzed to validate proper implementation in the model by comparing it to the steady-state analytical solution. To simulate this behaviour, an adiabatic Neumann boundary condition ($\Delta \phi = 0$) was applied on the faces of the secondary axis in each test. On the other hand, the boundary conditions for the primary axis in the test were configured following the same testing plan described in Section \ref{secDiffusion1D}. The results obtained in this validation successfully replicated the expected behaviour and produced the same plots as those seen in Figure \ref{figDiff1DAnalSol} for each axis. Furthermore, a comparison with the \textit{Exercise 3: 4 Materials Case} will be used as a benchmark to complete the validation of the model.
+
+{\color{red} Creo que sería redundante volver a poner las mismas gráficas que puse en la otra sección para los boundary conditions pero no estoy seguro.}
+
+\subsubsection{4 Materials Case}
+The results obtained for \textit{Exercise 3: 4 Materials Case} are shown in Fig. \ref{figDiff2D4Materials}. As mentioned above, this is a transient simulation and there is no analytical solution that can be used to compare it. Instead, this case provides reference values for the temperature map at certain time instants, as well as the temperature evolution of two defined points.
+
+\begin{figure}[ht]
+	\centering
+	\begin{tabular}{cc}
+		\includegraphics[width=0.45\linewidth]{Chapter1/Media/PLACEHOLDER.png} & \includegraphics[width=0.45\linewidth]{Chapter1/Media/PLACEHOLDER.png} \\
+		Caption 1 & Caption 2 \\
+	\end{tabular}
+	\caption{PLACEHOLDER TITLE}
+	\label{figDiff2D4Materials}
+\end{figure}
+

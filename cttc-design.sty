@@ -1,0 +1,108 @@
+% ##############################################################################
+% Document class identification.
+% ##############################################################################
+\ProvidesPackage{cttc-design}[2018/06/21 Companion to CTTC PhD Thesis template]
+
+% ==============================================================================
+% Typography and special characters.
+% ==============================================================================
+%\usepackage{fixmath}
+%\usepackage{sansmath}
+\usepackage{upgreek}
+\usepackage{pifont}
+\usepackage{microtype}
+
+% ==============================================================================
+% Sectioning titles.
+% ==============================================================================
+\usepackage{titlesec}
+\def\sctitle{\bfseries}
+\def\capfnt{}
+\titlespacing*{\subsection}{0pt}{6mm}{3mm}
+\titlespacing*{\subsubsection}{0pt}{3mm}{3mm}
+\titleformat{\section}[block]{\bfseries\large\boldmath}{\phantomsection\thesection~}{0.75em}{}
+\titleformat{\subsection}[block]{\bfseries\boldmath}{\phantomsection\thesubsection~}{0.75em}{}
+\titleformat{\subsubsection}[runin]{\itshape}{}{5mm}{}
+\setcounter{secnumdepth}{2}
+\titleformat{\chapter}[display]%
+{\bfseries\boldmath}
+{% code
+\hrulefill~\bfseries\Large{\capname}~\Huge\thechapter}% label
+{2ex}% separation label-title
+{\bfseries\huge\filright}% titleblock
+%[2ex] % space after title
+
+% ==============================================================================
+% Header and footer.
+% ==============================================================================
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyfoot{}
+\def\headrulewidth{0pt}
+\lhead[\fancyplain{}{\relax\thepage}]{\fancyplain{}{\rightmark}}
+\rhead[\fancyplain{}{\leftmark}]{\fancyplain{}{\relax\thepage}}
+\cfoot[\fancyplain{\relax\thepage}{}]{\relax\fancyplain{\thepage}{}}
+\fancypagestyle{plain}{%
+\fancyhf{}
+\fancyfoot[C]{\relax\thepage}}
+%\rhead{\bfseries\thepage}
+%\lhead{\leftmark}
+
+% ==============================================================================
+% Figures and captions.
+% ==============================================================================
+\usepackage{booktabs}
+\usepackage{caption} % caption style
+\usepackage{subcaption}
+\usepackage{floatrow} % caption placement
+\floatsetup[table]{style=plaintop}
+\floatsetup{floatrowsep=qquad}
+\usepackage{rotating} % sideways environment
+
+% notes for labelfont:
+% multiple options should be separated by commas,
+% and can be used in case the font exists: bf,sf is ok.
+% bf -> bold,
+% sf-> sans serif (aka "helvetica" or "arial"),
+% it -> italic,
+% sc -> small caps,
+% sl -> slanted (aka poor man italics)
+\captionsetup{font={small},labelfont={bf},labelsep=colon}
+\captionsetup[subfigure]{labelfont={}}
+\def\tcaption#1{\caption{\capfnt\small #1}}
+\def\mfcaption#1{\captionof{figure}{\capfnt\small #1}}
+
+% ==============================================================================
+% Font selection.
+% ==============================================================================
+\ifxetex
+ \usepackage{fouriernc}
+ \usepackage{fontspec}
+ \setmainfont{Century Schoolbook L}
+ \setsansfont{LiberationSans}
+ \setmonofont{Ubuntu Mono}
+ \newfontface\maintitlefont{Comic Sans MS}
+\else
+ \usepackage{fouriernc}
+ \usepackage[scaled=0.8]{beramono}
+ \usepackage[scaled=0.9]{helvet}
+%  \font\maintitlefont=cmssbx10 at 30pt
+\fi
+
+%%\usepackage{mathpazo}
+% \usepackage{mathpple}
+%\usepackage[charter]{mathdesign}
+%%\usepackage[math]{iwona} % dotless j
+%\usepackage{fourier} % dotless j
+%\usepackage{kpfonts}
+%\usepackage{nextxtext}
+%\usepackage{nextxmath}
+%\usepackage{lmodern}
+
+\linespread{1.13}
+
+% ==============================================================================
+% Algorithms.
+% ==============================================================================
+\usepackage{algorithm}
+\usepackage[noend]{algpseudocode}
