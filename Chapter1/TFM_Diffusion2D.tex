@@ -61,42 +61,42 @@ For this test, timestep $\Delta t$ and number of nodes $N$ are modified to analy
 \end{equation}
 
 \subsubsection{$\Delta t$ Study}
-The results obtained from the tests explained above are shown in Figure \ref{figDiffResults2DA}. PENDING FROM HERE As shown, the number of iterations and total residue follow a similar trend to the one seen in the 1D case. As well as having a clear inflection for the explicit scheme when the timestep becomes limited due to the configuration parameters. PENDING COMMENTS ABOUT SCHEME
+The results obtained from the tests explained above are shown in Figure \ref{figDiffResults2DA}. As shown, the number of iterations and total residue follow a similar trend to the one seen in the 1D case, increasing with $\Delta t$ for the implicit and crank-nicolson schemes. Showing a better performance for the crank-nicolson scheme on both metrics.  On the other hand, the explicit scheme did not present any changes during the timestep study. This is due to the timestep being limited by the expression discussed above; which in this case happened for all analyzed cases.
 
 \begin{figure}[ht]
 	\begin{tabular}{cc}
-		\includegraphics[width=0.45\linewidth]{Chapter1/Media/PLACEHOLDER.png} & \includegraphics[width=0.45\linewidth]{Chapter1/Media/PLACEHOLDER.png} \\
+		\includegraphics[width=0.45\linewidth]{Chapter1/Media/tSweep2DIterations.png} & \includegraphics[width=0.45\linewidth]{Chapter1/Media/tSweep2DResidue.png} \\
 	\end{tabular}
 	\caption{$\Delta t$ sweep results.}
 	\label{figDiffResults2DA}
 \end{figure}
 
 \subsubsection{$N$ Study}
-The results obtained from the tests explained above are shown in Figure \ref{figDiffResults2DB}. Similar to the previous test, the presented plots follow a similar trend to the ones discused above, showing an increase in number of iterations and residue for all three schemes....... PENDING
+The results obtained from the tests explained above are shown in Figure \ref{figDiffResults2DB}. Just like in the previous test, the presented plots show a similar trend to the one seen in the previous scenario, showing an increase in number of iterations and residue for most cases. Furthermore, the implicit scheme showed higher sensitivity to increases in $N$ compared to the crank-nicolson and explicit schemes; with the explicit scheme showing no change at all. On the other hand, while residue was significantly higher for implicit on coarser meshes, the difference between the implicit and crank-nicolson schemes became smaller as $N$ increased; with the explicit scheme showing a slight increase in the beginning but less of an impact as $N$ kept increasing.
 
 \begin{figure}[ht]
 	\begin{tabular}{cc}
-		\includegraphics[width=0.45\linewidth]{Chapter1/Media/PLACEHOLDER.png} & \includegraphics[width=0.45\linewidth]{Chapter1/Media/PLACEHOLDER.png} \\
+		\includegraphics[width=0.45\linewidth]{Chapter1/Media/NSweep2DIterations.png} & \includegraphics[width=0.45\linewidth]{Chapter1/Media/NSweep2DResidue.png} \\
 	\end{tabular}
-	\caption{$\Delta N$ sweep results.}
+	\caption{$N$ sweep results.}
 	\label{figDiffResults2DB}
 \end{figure}
 
 \subsection{Model Validation}
 In the same way as done in Section \ref{secDiffusion1D}, boundary conditions were independently analyzed to validate proper implementation in the model by comparing it to the steady-state analytical solution. To simulate this behaviour, an adiabatic Neumann boundary condition ($\Delta \phi = 0$) was applied on the faces of the secondary axis in each test. On the other hand, the boundary conditions for the primary axis in the test were configured following the same testing plan described in Section \ref{secDiffusion1D}. The results obtained in this validation successfully replicated the expected behaviour and produced the same plots as those seen in Figure \ref{figDiff1DAnalSol} for each axis. Furthermore, a comparison with the \textit{Exercise 3: 4 Materials Case} will be used as a benchmark to complete the validation of the model.
 
-{\color{red} Creo que sería redundante volver a poner las mismas gráficas que puse en la otra sección para los boundary conditions pero no estoy seguro.}
+{\color{red} Creo que sería redundante volver a poner las mismas gráficas que puse en la otra sección para los boundary conditions y debería ser suficiente con la validación con el caso. Debería dejar de mencionarlo en general?.}
 
 \subsubsection{4 Materials Case}
-The results obtained for \textit{Exercise 3: 4 Materials Case} are shown in Fig. \ref{figDiff2D4Materials}. As mentioned above, this is a transient simulation and there is no analytical solution that can be used to compare it. Instead, this case provides reference values for the temperature map at certain time instants, as well as the temperature evolution of two defined points.
+The results obtained for \textit{Exercise 3: 4 Materials Case} are shown in Fig. \ref{figDiff2D4Materials}. As mentioned above, this is a transient simulation and there is no analytical solution available to compare the results with. Instead, this case provides reference values for two separate points at different instants of the simulation. As seen in the results, the model was able to match the values provided for points $[0.65, 0.56]$ and $[0.74, 0.72]$; as well as showing a temperature distribution consistent with the provided time instants.
 
 \begin{figure}[ht]
 	\centering
 	\begin{tabular}{cc}
-		\includegraphics[width=0.45\linewidth]{Chapter1/Media/PLACEHOLDER.png} & \includegraphics[width=0.45\linewidth]{Chapter1/Media/PLACEHOLDER.png} \\
-		Caption 1 & Caption 2 \\
+		\includegraphics[width=0.45\linewidth]{Chapter1/Media/4MaterialsPoint.png} & \includegraphics[width=0.45\linewidth]{Chapter1/Media/4MaterialsMap.png} \\
 	\end{tabular}
-	\caption{PLACEHOLDER TITLE}
+	\caption{Comparison of model results with results provided in problem statement.}
 	\label{figDiff2D4Materials}
 \end{figure}
 
+{\color{red} Debería incluir el resto de temperature maps? Siento que es llenarlo con más de lo mismo.}
