@@ -1,3 +1,53 @@
-\chapter{Convection-Diffusion Model}
+\chapter{Convection-Diffusion Model}~\label{chapConvection}
 
-This chapter will develop the resolution of Convection-Diffusion problems in 1D and 2D.
+This chapter will explain the implementation of a convection-diffusion model. In this case, the complete transport equation shown in Chapter~\ref{chapIntroduction} needs to be implemented, considering both the diffusive and convective elements. The model implementation will be validated by solving the Smith-Hutton case and comparing the results to available reference values. In addition, the implementation described in this chapter will follow the discretization model described by Patankar~\cite{Patankar}, which proposes a generalized formulation that considers the various convective schemes available for numerical resolution. Based on said formulation, the discretized coefficients for a 2D model are shown below in Eqs.~\ref{eqConv_aw},~\ref{eqConv_ae},~\ref{eqConv_as},~\ref{eqConv_an},~\ref{eqConv_ap},~\ref{eqConv_bp}.
+
+\begin{equation}~\label{eqConv_aw}
+    a_W = D_w A(|P_w|) + ||F_w, 0||
+\end{equation}
+
+\begin{equation}~\label{eqConv_ae}
+    a_E = D_e A(|P_e|) + ||-F_e, 0||
+\end{equation}
+
+\begin{equation}~\label{eqConv_as}
+    a_S = D_s A(|P_s|) + ||F_s, 0||
+\end{equation}
+
+\begin{equation}~\label{eqConv_an}
+    a_N = D_n A(|P_n|) + ||-F_n, 0||
+\end{equation}
+
+\begin{equation}~\label{eqConv_ap}
+    a_P = a_W + a_E + a_S + a_N + a^0_P
+\end{equation}
+
+\begin{equation}~\label{eqConv_bp}
+    b_P = S_{\phi} V_P + a^0_P \phi^0_P
+\end{equation}
+
+\begin{equation*}
+    a^0_P = \frac{\rho^0_P V_P}{\Delta t}
+\end{equation*}
+
+As mentioned above, this discretization model includes the additional $A(|P|)$ term, which corresponds to a different function depending on the convective scheme. A summary of the expressions used for the convective schemes implemented in the model is shown in Table~\ref{tabConvSchemes}.
+
+\begin{table}[ht]
+    \centering
+    \begin{tabular}{|c|c|}
+        \hline
+        Scheme & $A(|P|)$ \\
+        \hline
+        CDS & $1 - 0.5 |P|$ \\
+        UDS & $1$ \\
+        Hybrid & $\Vert 0, 1 - 0.5 |P| \Vert$ \\
+        Power Law & $\Vert 0, (1 - 0.1|P|)^5 \Vert$ \\
+        Exponential & $\frac{|P|}{e^{|P|}} - 1$ \\
+        \hline
+    \end{tabular}{}
+    \caption{\textit{The function $A(|P|)$ for different schemes}~\cite{Patankar}.}
+    \label{tabConvSchemes}
+\end{table}
+
+% Sections
+\input{Chapter2/TFM_Convection2D}

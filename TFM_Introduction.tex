@@ -5,11 +5,11 @@ This report will cover the development of numerical tools for the resolution of 
 When studying transport phenomena, there are two main mechanisms that govern the propagation of a transport variable $\phi$. These are known as \textbf{Convection} and \textbf{Diffusion}, and classify the phenomena depending on what causes the transport of the transport variable $\phi$. Diffusion refers to transport caused by molecular movement within the body, while Convection refers to transport caused by bulk movement of the body. The governing transport equation for this phenomena is given by Eq.~\ref{eqTransGov}, where each element can be discretized as shown in Eqs.~\ref{eqTransAcc}, ~\ref{eqTransConv}, ~\ref{eqTransDiff}. The discretization considers a rectangular prism control volume and is done considering a 2D mesh, keeping in mind that the 1D case ignores the elements for south and north neighbors. This discretization model will be the basis for the implementation shown in the following chapters, with appropriate clarifications for the nature of $\phi$ in each case.
 
 \begin{equation} \label{eqTransGov}
-    \rho \frac{\partial \phi}{\partial t} + \nabla (\rho v \phi) = \Gamma \nabla \phi + S_{\phi}
+    \frac{\partial (\rho \phi)}{\partial t} + \nabla (\rho v \phi) = \nabla (\Gamma \nabla \phi) + S_{\phi}
 \end{equation}
 
 \begin{equation}~\label{eqTransAcc}
-	\rho \frac{\partial \phi}{\partial t} = \rho \frac{\phi_P - \phi^0_P}{\Delta t}
+	\frac{\partial (\rho \phi)}{\partial t} = \rho \frac{\phi_P - \phi^0_P}{\Delta t}
 \end{equation}
 
 \begin{equation}~\label{eqTransConv}
@@ -17,7 +17,7 @@ When studying transport phenomena, there are two main mechanisms that govern the
 \end{equation}
 
 \begin{equation}~\label{eqTransDiff}
-	\Gamma \nabla \phi = \Gamma_W \frac{\phi_W - \phi_P}{d_{PW}} - \Gamma_E \frac{\phi_P - \phi_E}{d_{PE}} + \Gamma_S \frac{\phi_S - \phi_P}{d_{PS}} - \Gamma_N \frac{\phi_P - \phi_N}{d_{PN}}
+	\nabla (\Gamma \nabla \phi) = \Gamma_W \frac{\phi_W - \phi_P}{d_{PW}} - \Gamma_E \frac{\phi_P - \phi_E}{d_{PE}} + \Gamma_S \frac{\phi_S - \phi_P}{d_{PS}} - \Gamma_N \frac{\phi_P - \phi_N}{d_{PN}}
 \end{equation}
 
 

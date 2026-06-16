@@ -1,0 +1,73 @@
+\section{2D Convection}~\label{secConvection2D}
+This section will cover the implementation of a C++ code for the resolution of a two-dimensional transient-state convection-diffusion transport model. The model works using a configuration file that follows the same structure discussed in the previous chapter with some additional modifications implemented when implementing this section of the model. A summary of the parameters included in the file is shown in Table~\ref{tabConfigConv}. As it can be seen, the main modifications were the addition of the velocity field, separation of temporal and convective scheme parameters, and the inclusion of a Medic data section designed to control the diagnostics tool. Finally, due to the asymmetrical nature of convective transport, an additional numerical solver using the Biconjugate Gradient Stabilized Method had to be implemented to ensure convergence and stability. 
+
+\begin{table}[ht]
+	\centering
+	\begin{tabular}{|l|c|p{0.5\linewidth}|}
+		\hline
+		Group & Parameter & Description \\
+		\hline
+		\multirow{8}{*}{Numerical Data} & tempScheme & Temporal scheme selection for simulation. \\
+            & spatScheme & Convective scheme selection for simulation. \\ 
+            & solver & Solver algorithm for simulation. \\
+			& tolNumeric & Tolerance for the numerical solver. \\
+			& tolTemporal & Tolerance for the steady-state convergence. \\
+			& maxIterations & Limit of iterations per timestep. \\
+			& endTime & Last instant of the simulation. \\
+			& timeStep & Time increment after each instant. \\
+		\hline
+		\multirow{4}{*}{Physical Data} & T0 & Initial value for temperature map. \\
+					       & \multirow{2}{*}{materials} & List of vectors with thermophysical properties corresponding to each material. \\
+                           & velocityField & List of expressions for each component of the velocity field. \\
+		\hline
+		\multirow{5}{*}{Geometrical Data} & width & Dimension in the secondary axis. \\
+						  & \multirow{4}{*}{sections} & List of vectors indicating the distribution of materials in the simulation. Also includes amount of nodes and internal heat generation. \\
+		\hline
+		\multirow{9}{*}{Mesh Data} & strength & Cubic algebraic mesh parameter. \\
+					   & centering & Cubic algebraic mesh parameter. \\
+					   & kappa & Power law mesh parameter. \\
+					   & delta & Hyperbolic tangent mesh parameter. \\
+					   & meshAlgorithm & Algorithm for mesh generation. \\
+					   & \multirow{2}{*}{N} & List specifying total number of nodes for each axis. \\
+					   & \multirow{2}{*}{refinement} & List of vectors specifying refinement configuration for each axis. \\
+		\hline
+		\multirow{2}{*}{Boundary Data} & \multirow{2}{*}{boundaries} & List of vectors specifying the boundary conditions on each side. \\
+		\hline
+		\multirow{2}{*}{Probe Data} & \multirow{2}{*}{probes} & List of vectors specifying the probes configured for the simulation. \\
+		\hline
+        Medic Data & medicOn & Control argument for diagnostic tool. \\
+        \hline
+	\end{tabular}
+	\caption{Configuration file structure.}
+	\label{tabConfigConv}
+\end{table}
+
+This model will be validated by solving the Smith-Hutton problem, being used both as the test case for the numerical parameter study and for the model validation. The model validation will be done by comparing the model results to reference values provided for cases with $\rho / \Gamma = 10^1, 10^3, 10^6$. The numerical parameter study will compare the number of iterations and total residue for each of these cases for two of the convective schemes implemented for the model; namely Central Difference Scheme (CDS) and Upwind Difference Scheme (UDS).
+
+\section{Numerical Parameter Study}
+The results obtained for the previously described numerical parameter study are shown in Fig.~\ref{figConvNumerical}. As shown, PENDING MAKE PLOTS AND COMMENT RESULTS % PENDING
+
+\begin{figure}[ht]
+    \centering
+    \begin{tabular}{cc}
+        \includegraphics[width=0.45\linewidth]{Chapter2/PLACEHOLDER.png} & \includegraphics[width=0.45\linewidth]{Chapter2/PLACEHOLDER.png} \\
+    \end{tabular}
+    \caption{Convective scheme comparison.}
+    \label{figConvNumerical}
+\end{figure}
+
+
+\section{Model Validation}
+As mentioned above, the model will be compared to the provided reference values for the Smith-Hutton problem. This problem consists of a defined velocity field in a control volume where the presence of a transport variable is introuced. The validation will consist of comparing the steady-state solution at the boundaries with reference values for this particular problem in three main scenarios that consist of changing the ratio between the density $\rho$ and the diffusive transport coefficient $\Gamma$. For this test, $\Gamma$ will remain fixed at $1$ while $\rho$ will be evaluated at $10^1$, $10^3$, and $10^6$. The results of this test cases are shown in Fig.~\ref{figConvSH}; as it can be seen the, PENDING MAKE PLOTS AND COMMENT RESULTS % PENDING
+
+\begin{figure}[ht]
+	\centering
+	\begin{tabular}{cc}
+		\includegraphics[width=0.45\linewidth]{Chapter2/PLACEHOLDER.png} & \includegraphics[width=0.45\linewidth]{Chapter2/PLACEHOLDER.png} \\
+        \scriptsize{\textit{Case 1}} & \scriptsize{\textit{Case 2}} \\
+        \multicolumn{2}{c}{\includegraphics[width=0.45\linewidth]{Chapter2/PLACEHOLDER.png}} \\
+        \multicolumn{2}{c}{\scriptsize{\textit{Case 3}}} \\
+	\end{tabular}
+	\caption{Comparison of model results with results provided in problem statement.}
+	\label{figConvSH}
+\end{figure}

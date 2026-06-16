@@ -3,19 +3,19 @@
 This chapter will explain the implementation of a pure diffusion model. For a pure diffusion model the governing transport equation can be reduced to the expression shown in Eq.~\ref{eqDiffGov}, with the corresponding discretized version shown in Eq.~\ref{eqDiffDisc}. For the case of the thermal conduction model being implemented in this chapter, the equivalent expressions using Temperature as the transport variable and including the relevant physical parameters are shown in Eqs.~\eqref{eqDiffGovTemp}, ~\eqref{eqDiffDiscTemp}.
 
 \begin{equation}~\label{eqDiffGov}
-	\rho \frac{\partial \phi}{\partial t} = \Gamma \nabla \phi + S_{\phi}
+        \frac{\partial (\rho \phi)}{\partial t} = \nabla (\Gamma \nabla \phi) + S_{\phi}
 \end{equation}
 
 \begin{equation}~\label{eqDiffDisc}
-	\rho c_P V_P \frac{\phi_P - \phi^0_P}{\Delta t} = \Gamma_W \frac{\phi_W - \phi_P}{d_{PW}} + \Gamma_E \frac{\phi_P - \phi_E}{d_{PE}} + \Gamma_S \frac{\phi_S - \phi_P}{d_{PS}} + \Gamma_N \frac{\phi_P - \phi_N}{d_{PN}} + S_{\phi}
+	\rho \frac{\phi_P - \phi^0_P}{\Delta t} = \Gamma_W \frac{\phi_W - \phi_P}{d_{PW}} - \Gamma_E \frac{\phi_P - \phi_E}{d_{PE}} + \Gamma_S \frac{\phi_S - \phi_P}{d_{PS}} - \Gamma_N \frac{\phi_P - \phi_N}{d_{PN}} + S_{\phi}
 \end{equation}
 
 \begin{equation}~\label{eqDiffGovTemp}
-	\rho c_P V_P \frac{\partial T}{\partial t} = \lambda \nabla T + S_V
+	\rho c_P V_P \frac{\partial T}{\partial t} = \lambda \nabla T + S_P
 \end{equation}
 
 \begin{equation}~\label{eqDiffDiscTemp}
-	\rho c_P V_P \frac{T_P - T^0_P}{\Delta t} = \lambda_W S_W \frac{T_W - T_P}{d_{PW}} + \lambda_E S_E \frac{T_P - T_E}{d_{PE}} + \lambda_S S_S \frac{T_S - T_P}{d_{PS}} + \lambda_N S_N \frac{T_P - T_N}{d_{PN}} 
+	\rho c_P V_P \frac{T_P - T^0_P}{\Delta t} = \lambda_W S_W \frac{T_W - T_P}{d_{PW}} - \lambda_E S_E \frac{T_P - T_E}{d_{PE}} + \lambda_S S_S \frac{T_S - T_P}{d_{PS}} - \lambda_N S_N \frac{T_P - T_N}{d_{PN}} 
 \end{equation}
 
 % Sections
