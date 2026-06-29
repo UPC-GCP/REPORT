@@ -44,30 +44,49 @@ This section will cover the implementation of a C++ code for the resolution of a
 
 This model will be validated by solving the Smith-Hutton problem, being used both as the test case for the numerical parameter study and for the model validation. The model validation will be done by comparing the model results to reference values provided for cases with $\rho / \Gamma = 10^1, 10^3, 10^6$. The numerical parameter study will compare the number of iterations and total residue for each of these cases for two of the convective schemes implemented for the model; namely Central Difference Scheme (CDS) and Upwind Difference Scheme (UDS).
 
-\section{Numerical Parameter Study}
-The results obtained for the previously described numerical parameter study are shown in Fig.~\ref{figConvNumerical}. As shown, PENDING MAKE PLOTS AND COMMENT RESULTS % PENDING
+\subsection{Numerical Parameter Study}
+The results obtained for the previously described numerical parameter study are shown in Fig.~\ref{figConvNumerical}. As shown, using CDS will result in a higher number of iterations as the ratio increases, not being able to reach convergence within the simulation constraints for the case where $\rho / \Gamma = 10^6$. Figure~\ref{figConvCDS} shows the obtained colormap on the last time-step of the simulation. As it can be seen, there is severe checkerboarding across the domain. On the other hand, UDS was able to converge for all values across the tested range. As such, model validation will only show the colormaps for UDS. These divergence is seen due to the Peclet number ($Pe$), which is a measure of dominance between Convection and Diffusion for a given transport phenomena where $Pe << 1$ means the phenomena is diffusion dominant and $Pe >> 1$ means it is convection dominant. This means that CDS has a particular limitation that can be seen in its definition in Table~\ref{tabConvSchemes}. For simulations where $Pe > 2$, the expression will have an inverted sign and break the diagonal dominance requirement for the linear solver. On the other hand, since UDS only takes values from one side, the coefficients will never see a sign inversion, making it unconditionally stable.
 
 \begin{figure}[ht]
     \centering
     \begin{tabular}{cc}
-        \includegraphics[width=0.45\linewidth]{Chapter2/PLACEHOLDER.png} & \includegraphics[width=0.45\linewidth]{Chapter2/PLACEHOLDER.png} \\
+        \includegraphics[width=0.45\linewidth]{Chapter2/Media/IterConv.png} & \includegraphics[width=0.45\linewidth]{Chapter2/Media/ResidueConv.png} \\
     \end{tabular}
     \caption{Convective scheme comparison.}
     \label{figConvNumerical}
 \end{figure}
 
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.45\linewidth]{Chapter2/Media/ConvCDS3.png}
+    \caption{CDS divergence for $\rho / \Gamma = 10^6$}
+    \label{figConvCDS}
+\end{figure}
 
-\section{Model Validation}
-As mentioned above, the model will be compared to the provided reference values for the Smith-Hutton problem. This problem consists of a defined velocity field in a control volume where the presence of a transport variable is introuced. The validation will consist of comparing the steady-state solution at the boundaries with reference values for this particular problem in three main scenarios that consist of changing the ratio between the density $\rho$ and the diffusive transport coefficient $\Gamma$. For this test, $\Gamma$ will remain fixed at $1$ while $\rho$ will be evaluated at $10^1$, $10^3$, and $10^6$. The results of this test cases are shown in Fig.~\ref{figConvSH}; as it can be seen the, PENDING MAKE PLOTS AND COMMENT RESULTS % PENDING
+
+\subsection{Model Validation}
+As mentioned above, the model will be compared to the provided reference values for the Smith-Hutton problem, these values were obtained using CDS but this report will compare both UDS and CDS. This problem consists of a defined velocity field in a control volume where the presence of a transport variable is introuced. The validation will consist of comparing the steady-state solution at the boundaries with reference values for this particular problem in three main scenarios that consist of changing the ratio between the density $\rho$ and the diffusive transport coefficient $\Gamma$. For this test, $\Gamma$ will remain fixed at $1$ while $\rho$ will be evaluated at $10^1$, $10^3$, and $10^6$. The results of this test cases are shown in Fig.~\ref{figConvSH}; as it can be seen the, model accurately matched the expected results at the boundaries, with a slight expected deviation for UDS. Contrary to CDS which is second-order accurate, UDS is first-order accurate, this implies certain mathematical simplifications and as such, a slight error against the exact solution. This effect is generally seen in the smoothening of sharp gradients as can be seen in these results. In addition, the obtained steady-state solutions for UDS simulations are shown in Figure~\ref{figConvUDS}.
 
 \begin{figure}[ht]
 	\centering
 	\begin{tabular}{cc}
-		\includegraphics[width=0.45\linewidth]{Chapter2/PLACEHOLDER.png} & \includegraphics[width=0.45\linewidth]{Chapter2/PLACEHOLDER.png} \\
+		\includegraphics[width=0.45\linewidth]{Chapter2/Media/BoundaryConv0.png} & \includegraphics[width=0.45\linewidth]{Chapter2/Media/BoundaryConv1.png} \\
         \scriptsize{\textit{Case 1}} & \scriptsize{\textit{Case 2}} \\
-        \multicolumn{2}{c}{\includegraphics[width=0.45\linewidth]{Chapter2/PLACEHOLDER.png}} \\
+        \multicolumn{2}{c}{\includegraphics[width=0.45\linewidth]{Chapter2/Media/BoundaryConv2.png}} \\
         \multicolumn{2}{c}{\scriptsize{\textit{Case 3}}} \\
 	\end{tabular}
 	\caption{Comparison of model results with results provided in problem statement.}
 	\label{figConvSH}
+\end{figure}
+
+\begin{figure}[ht]
+    \centering
+    \begin{tabular}{cc}
+        \includegraphics[width=0.45\linewidth]{Chapter2/Media/ConvUDS1.png} & \includegraphics[width=0.45\linewidth]{Chapter2/Media/ConvUDS2.png} \\
+        \scriptsize{\textit{Case 1}} & \scriptsize{\textit{Case 2}} \\
+        \multicolumn{2}{c}{\includegraphics[width=0.45\linewidth]{Chapter2/Media/ConvUDS3.png}} \\
+        \multicolumn{2}{c}{\scriptsize{\textit{Case 3}}} \\
+    \end{tabular}
+    \caption{UDS results for all cases.}
+    \label{figConvUDS}
 \end{figure}

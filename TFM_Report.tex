@@ -1,20 +1,77 @@
-\documentclass{cttc-thesis}
-\usepackage{cttc-design}
-% \usepackage{gnuplot-lua-tikz}
-% \input{source-conde-conf} % Typeset code
+\documentclass[a4paper,11pt, titlepage, twoside]{article}
 
-% Imports
+%%%%% Config %%%%%
+\usepackage[utf8]{inputenc}
+
+% Language and font encodings
+\usepackage[english]{babel} %spanish, english, ...
+\usepackage{lipsum}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{parskip}
+\setlength{\parskip}{4mm}
+\setlength{\footskip}{60pt}
+\setlength{\headheight}{15pt}
+
+%% Size and margins
+\usepackage[a4paper,top=3cm, bottom=3.2cm, inner=3cm, outer=2cm, footnotesep=1cm, heightrounded]{geometry}
+
+%% Imports 
+\usepackage{float}
+\usepackage{verbatim}
+\usepackage{amsmath}
+\usepackage{systeme}
+\usepackage{graphicx}
+\usepackage{multirow}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{wrapfig}
+\usepackage[colorinlistoftodos]{todonotes}
+\usepackage[colorlinks=true, allcolors=blue]{hyperref}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage[firstpage]{draftwatermark}
+\usepackage{transparent}
+\usepackage{textcomp} %podem escriure ``o'' amb la comanda \textdegree també € amb \texteuro
+\usepackage[gen]{eurosym} %tb official en lloc de ``gen''
+\usepackage[section]{placeins} %Evita que les figures saltin de secció
+\usepackage{fancyref}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{mathtools}
+\usepackage{commath}
+\usepackage{scrextend}%Indentar un bloc sencer
+\usepackage{tgpagella}
+\usepackage{dtk-logos}
+
+%% Commands
+\newcommand{\sectionbreak}{\cleardoublepage}
+
+%% Caps de pagina i peus (E/O (even/odd), L/C/R (left/center/right) y H/F (header/footer))
+\fancyhf{}
+\fancyhead[ER]{Memòria}
+\fancyhead[OL]{Podeu posar el títol aquí}
+\fancyhf[ELH, ORH]{pàg. \thepage}
+%\fancyfoot[C]{}
+\fancyfoot[EL, OR]{
+\includegraphics[scale=0.2]{Media/ETSEIB.png}}
+\pagestyle{fancy}
+\raggedbottom
+
+\SetWatermarkText{\hspace{9mm}\transparent{0.15}\includegraphics[scale=2.5]{Media/ETSEIB.png}}
+\SetWatermarkAngle{0}
+\SetWatermarkLightness{1}
+
+%% Imports
 \usepackage{multicol}
 \usepackage{multirow}
 \usepackage{parskip}
 
+%%%%% Document %%%%%
 \begin{document}
 
 % Title
 %\include{TFM_Title}
-% PENDING:
-% CHECK \titol FUNCTION AND MODIFY/REMAKE IT SO IT FITS THE TFM FORMATTING WHEN YOU KNOW WHAT THAT SHOULD LOOK LIKE (cttc-thesis.cls ln:339)
-% Probably better to create \titloTFM or something to not 
 
 % Foreword
 \input{TFM_Foreword.tex}

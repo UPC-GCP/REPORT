@@ -70,7 +70,7 @@ For this test, the time step $\Delta t$ and the number of nodes $N$ are modified
 
 \begin{equation}
     \label{eqDifftExplicit1D}
-    \Delta t_{max} = \frac{\Delta x^2}{\alpha}
+    \Delta t_{max} = \frac{\Delta x^2}{2 \alpha}
 \end{equation}
 
 \subsubsection{$\Delta t$ Sweep}
@@ -84,8 +84,6 @@ The results obtained from the tests explained above are shown in Figure \ref{fig
     \caption{\textit{$\Delta t$ sweep results.}}
     \label{figDiffResults1DA}
 \end{figure}
-
-{\color{red} No me gusta como se ve el subsubsection, cambiar la función para que deje un espacio después del título como en section (pero sin numerar)}
 
 \subsubsection{$N$ Sweep}
 The results obtained for the tests explained above are shown in Figure \ref{figDiffResults1DB}. Similarly to the previous case, the explicit scheme is a direct calculation and does not require more iterations. In addition, showing an increase in the number of iterations for the crank-nicolson and implicit schemes, suggesting better performance for crank-nicolson as the mesh gets finer. Compared to the analytical solution, the explicit scheme still showed higher values compared to the crank-nicolson and implicit schemes; however, it seems to get closer as the number of nodes increases. In terms of computation time, both the crank-nicolson and implicit schemes saw a slight increase, while the explicit scheme saw a major difference as the mesh got finer.

@@ -11,11 +11,11 @@ This chapter will explain the implementation of a pure diffusion model. For a pu
 \end{equation}
 
 \begin{equation}~\label{eqDiffGovTemp}
-	\rho c_P V_P \frac{\partial T}{\partial t} = \lambda \nabla T + S_P
+	\rho c_P V_P \frac{\partial T}{\partial t} = \nabla (\lambda \nabla T) + S_P
 \end{equation}
 
 \begin{equation}~\label{eqDiffDiscTemp}
-	\rho c_P V_P \frac{T_P - T^0_P}{\Delta t} = \lambda_W S_W \frac{T_W - T_P}{d_{PW}} - \lambda_E S_E \frac{T_P - T_E}{d_{PE}} + \lambda_S S_S \frac{T_S - T_P}{d_{PS}} - \lambda_N S_N \frac{T_P - T_N}{d_{PN}} 
+    \rho c_P V_P \frac{T_P - T^0_P}{\Delta t} = \lambda_W S_W \frac{T_W - T_P}{d_{PW}} - \lambda_E S_E \frac{T_P - T_E}{d_{PE}} + \lambda_S S_S \frac{T_S - T_P}{d_{PS}} - \lambda_N S_N \frac{T_P - T_N}{d_{PN}} + S_{\phi}
 \end{equation}
 
 % Sections
