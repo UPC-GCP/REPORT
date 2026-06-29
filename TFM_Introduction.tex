@@ -1,4 +1,4 @@
-\chapter{Introduction}~\label{chapIntroduction}
+\section*{Introduction}~\label{chapIntroduction}
 
 This report will cover the development of numerical tools for the resolution of Convection-Diffusion problems while consolidating the knowledge related to the transport phenomena, and the application of numerical methods for their resolution. The models implemented in this project will use a finite volume method to discretize the analyzed domain. In addition, the goal of this project implies the development of a robust and versatile code structure to ensure the models can be easily applied to any problem configuration. This chapter will introduce the main concepts related to the governing equations and the discretization method. Furthermore, the development of the models will be separated into a first portion focused on a pure diffusion model, and a second one implementing the complete convection-diffusion model. The code structure will be explained within each model implementation as a reflection of the evolution of the model throughout the development of this project.
 
@@ -13,7 +13,7 @@ When studying transport phenomena, there are two main mechanisms that govern the
 \end{equation}
 
 \begin{equation}~\label{eqTransConv}
-	\nabla (\rho v \phi) = \rho (v_W \phi_W S_W - v_E \phi_E S_E + v_S \phi_S S_S - v_N \phi_N S_N)
+	\nabla (\rho v \phi) = \rho (v_E \phi_E S_E - v_W \phi_W S_W + v_N \phi_N S_N - v_S \phi_S S_S)
 \end{equation}
 
 \begin{equation}~\label{eqTransDiff}

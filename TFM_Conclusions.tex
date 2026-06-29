@@ -1,0 +1,13 @@
+\section*{Conclusions and Future Work}
+
+These document has covered the development and evolution of a Heat and Mass Transfer solver across different benchmarks of increasing complexity. Across the different stages of development of this model, different complexities regarding the implementation of numerical methods and the simplification of models have been observed and analyzed. These behaviour is consistent with the mathematical formulation behind the numerical solver and must be considered when configuring the simulation parameters. In addition, the model developed during this project will serve as a stepping stone towards more complex implementations. There are still several improvements that can be made to the model proposed with this project, particularly in terms of optimization of variables and some redundant algorithms. The model will continue to be maintained to expand its capacity and increase its performance, addressing all of the mentioned inefficiencies.
+
+PENDING WRITE COMMENTS
+
+\begin{enumerate}
+    \item Model 1D was simple but the structure of the code was archaic
+    \item Model 2D forced structure for the Mesh but discretization pretty much remained the same
+    \item Model Convection forced a modification of the discretization 
+    \item Model NS was an extension of convection, including Adams-Bashforth and Fractional Step Method
+    \item Inefficiencies in the code (storing positions instead of indexes for boundaries, improved in the later versions, mention minor improvements in algorithms, vectors that remain empty instead of being smaller, variable types that could be standardized to consume less memory)
+\end{enumerate}

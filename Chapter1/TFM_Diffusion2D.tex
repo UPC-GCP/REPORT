@@ -1,4 +1,4 @@
-\section{2D Transient Conduction Case}~\label{secDiffusion2D}
+\subsection{2D Transient Conduction Case}~\label{secDiffusion2D}
 In this section, the implementation of a C++ code for the resolution of a two-dimensional transient state heat conduction model is described. This model has several modifications compared to the previous one, mainly reflected in the format for the configuration file. Table~\ref{tabConfig2D} summarizes the new parameters accepted in the configuration file. As shown, probes have now been added as a configurable parameter to allow the user to choose which data is being saved. In addition, refinement can now be defined independently for each axis and in separate regions to allow the user better control over the mesh. Furthermore, a Medic class was also included to handle diagnostics and validation of energy conservation in the system. This class is also used as the central tool for debugging as it can easily be modified to log any information relevant to the model.
 
 \begin{table}[ht]
@@ -38,7 +38,7 @@ In this section, the implementation of a C++ code for the resolution of a two-di
 	\label{tabConfig2D}
 \end{table}
 
-\subsection{Numerical Parameter Study}
+\subsubsection{Numerical Parameter Study}
 For this test, timestep $\Delta t$ and number of nodes $N$ are modified to analyze their impact on the number of iterations and total residue. Both parameters will be independently swept across teir respective range of values while keeping the other parameter at a constant value. A summary of the values for each of these parameters is shown in Table \ref{tabDiffNumerical2D}, highlighting the values used for the base case. In addition, the explicit scheme still requires an imposed limit for the value of $\Delta t$, however the expression for the 2D case changes as described by Eq. \ref{eqDiffExplicit2D}. Contrary to the results shown for the 1D case, there will be no comparison of error with the analytical solution or computation time. This numerical parameter study will focus on comparing the number of iterations and total residue.
 
 \begin{table}[ht]
@@ -60,7 +60,7 @@ For this test, timestep $\Delta t$ and number of nodes $N$ are modified to analy
 \Delta t_{max} = \frac{\Delta x^2 \Delta y^2}{2 \alpha (\Delta x^2 + \Delta y^2)}
 \end{equation}
 
-\subsubsection{$\Delta t$ Study}
+\subsubsubsection{$\Delta t$ Study}
 The results obtained from the tests explained above are shown in Figure \ref{figDiffResults2DA}. As shown, the number of iterations and total residue follow a similar trend to the one seen in the 1D case, increasing with $\Delta t$ for the implicit and crank-nicolson schemes. Showing a better performance for the crank-nicolson scheme on both metrics.  On the other hand, the explicit scheme did not present any changes during the timestep study. This is due to the timestep being limited by the expression discussed above; which in this case happened for all analyzed cases.
 
 \begin{figure}[ht]
@@ -71,7 +71,7 @@ The results obtained from the tests explained above are shown in Figure \ref{fig
 	\label{figDiffResults2DA}
 \end{figure}
 
-\subsubsection{$N$ Study}
+\subsubsubsection{$N$ Study}
 The results obtained from the tests explained above are shown in Figure \ref{figDiffResults2DB}. Just like in the previous test, the presented plots show a similar trend to the one seen in the previous scenario, showing an increase in number of iterations and residue for most cases. Furthermore, the implicit scheme showed higher sensitivity to increases in $N$ compared to the crank-nicolson and explicit schemes; with the explicit scheme showing no change at all. On the other hand, while residue was significantly higher for implicit on coarser meshes, the difference between the implicit and crank-nicolson schemes became smaller as $N$ increased; with the explicit scheme showing a slight increase in the beginning but less of an impact as $N$ kept increasing.
 
 \begin{figure}[ht]
@@ -82,10 +82,10 @@ The results obtained from the tests explained above are shown in Figure \ref{fig
 	\label{figDiffResults2DB}
 \end{figure}
 
-\subsection{Model Validation}
+\subsubsection{Model Validation}
 In the same way as done in Section \ref{secDiffusion1D}, boundary conditions were independently analyzed to validate proper implementation in the model by comparing it to the steady-state analytical solution. To simulate this behaviour, an adiabatic Neumann boundary condition ($\Delta \phi = 0$) was applied on the faces of the secondary axis in each test. On the other hand, the boundary conditions for the primary axis in the test were configured following the same testing plan described in Section \ref{secDiffusion1D}. The results obtained in this validation successfully replicated the expected behaviour and produced the same plots as those seen in Figure \ref{figDiff1DAnalSol} for each axis. Furthermore, a comparison with the \textit{Exercise 3: 4 Materials Case} will be used as a benchmark to complete the validation of the model.
 
-\subsubsection{4 Materials Case}
+\subsubsubsection{4 Materials Case}
 The results obtained for \textit{Exercise 3: 4 Materials Case} are shown in Fig. \ref{figDiff2D4Materials}. As mentioned above, this is a transient simulation and there is no analytical solution available to compare the results with. Instead, this case provides reference values for two separate points at different instants of the simulation. As seen in the results, the model was able to match the values provided for points $[0.65, 0.56]$ and $[0.74, 0.72]$; as well as showing a temperature distribution consistent with the provided time instants.
 
 \begin{figure}[ht]

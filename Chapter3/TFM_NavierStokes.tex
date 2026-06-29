@@ -1,27 +1,45 @@
-\chapter{2D Navier-Stokes Model}~\label{chapNavierStokes}
-
-This chapter will describe the implementation of a numerical solver for 2D Navier-Stokes problems, using the Fractional Step Method and doing the temporal discretization using an Adams-Bashforth method. The Navier-Stokes equations describe the movement of fluids by describing multiple characteristics of the movement in a system of equations. The equations shown in Eq.~\ref{eqNSMass},~\ref{eqNSMomentum},~\ref{eqNSEnergy} describe the mass conservation, momentum conservation, and energy conservation respectively. As it can be seen, these equations follow the same structure behind transport equations shown in Chapter~\ref{chapIntroduction}, with the corresponding accumulation, convective, diffusive, and source terms. The model will be evaluated against reference values provided for the Lid-Driven Case problem \cite{PENDING}, which simplifies the model by removing the energy conservation evaluation. As such, the model will require only 3 equations, one for mass conservation, and the 2 geometric components of the momentum conservation.
+\section{2D Navier-Stokes Model}~\label{chapNavierStokes}
+This chapter will describe the implementation of a numerical solver for 2D Navier-Stokes problems, using the Fractional Step Method and doing the temporal discretization using an Adams-Bashforth method. The Navier-Stokes equations describe the movement of fluids by describing multiple characteristics of the movement in a system of equations. The equations shown in Eq.~\ref{eqNSMass},~\ref{eqNSMomentum},~\ref{eqNSEnergy} describe the mass conservation, momentum conservation, and energy conservation respectively. As it can be seen, these equations follow the same structure behind transport equations shown in Chapter~\ref{chapIntroduction}, with the corresponding accumulation, convective, diffusive, and source terms. The model will be evaluated against reference values provided for the Lid-Driven Case problem \cite{}, which simplifies the model by removing the energy conservation evaluation. As such, the model will require only 3 equations, one for mass conservation, and the 2 geometric components of the momentum conservation.
 
 \begin{equation}\label{eqNSMass}
-    \nabla v = 0
+    \nabla \cdot \mathbf{v} = 0
 \end{equation}
 
 \begin{equation}\label{eqNSMomentum}
-    \rho \frac{\diff v}{\diff t} + \rho (v \nabla) v = \mu \nabla^2 v - \nabla P
+    \rho \frac{\partial \mathbf{v}}{\partial t} + \rho (\mathbf{v} \cdot \nabla) \mathbf{v} = \mu \nabla^2 \mathbf{v} - \nabla P
 \end{equation}
 
 \begin{equation}\label{eqNSEnergy}
-    \rho c_P (\frac{\diff T}{\diff t} + \nabla v T) = \nabla (\lambda \nabla T) + \dot{q}_V
+    \rho c_p \frac{\partial T}{\partial t} + \rho c_p \nabla (\mathbf{v} T) = \nabla (\lambda \nabla T) + \dot{q}_V
 \end{equation}
 
-As mentioned above, this model uses the Adams-Bashford discretization method, which relies on two previous time-steps to evaluate the next iteration. Eq.~\ref{eqAdamsBashford} shows the expression used for this discretization method, where $R$ corresponds to the convective and diffusive terms evaluated at the corresponding time-step.
+As mentioned above, this model uses the Adams-Bashforth discretization method, which relies on two previous time-steps to evaluate the next iteration. Eq.~\ref{eqAdamsBashforth} shows the expression used for this discretization method, where $R(\mathbf{v})$ corresponds to the convective and diffusive terms evaluated at the corresponding time-step and is described by Eq.~\ref{eqRv}. The discretization for this expression will follow the discretization implemented in Chapter~\ref{chapConvection}.
 
-\begin{equation}\label{eqAdamsBashford}
-    \rho \frac{v^{n+1} - v^n}{\Delta t} = - \nabla P^{n+1} + \frac{3}{2} R(v^n) - \frac{1}{2} R(v^{n-1})
+\begin{equation}\label{eqAdamsBashforth}
+    \rho \frac{\mathbf{v}^{n+1} - \mathbf{v}^n}{\Delta t} = - \nabla P^{n+1} + \frac{3}{2} R(\mathbf{v}^n) - \frac{1}{2} R(\mathbf{v}^{n-1})
 \end{equation}
 
-\section{Fractional Step Method}
-This section will explain the different modifications that were implemented in the model to solve the current test case. As mentioned above, there is a requirement to solve multiple transport variables at the same time that are mutually dependent. Since the velocity and pressure need to be computed simultaneously, the Fractional Step Method separates this process into three separate steps. The first step consists of evaluating the velocity field while ignoring the pressure field. This calculated velocity field will not be an accurate solution for the next time-step; however, it can be used to evaluate the pressure field at the next time-step. After that second step, the only remaining operation is to correct the calculated velocity field with the influence of the now known pressure field. Since this is now a coupled solver solving for multiple variables instead of solving for a single one, the configuration file will now require the relevant details and information about every variable. As such, initial values and boundary conditions now need to be specified separately for the main solver variable and for the secondary, explicitly calculated, variables. In addition, a new Field probe was introduced specifically for the velocity field. Table~\ref{tabConfigNS} describes all the configuration parameters available for the current model.
+\begin{equation}\label{eqRv}
+    R(\mathbf{v}) = \mu \nabla^2 \mathbf{v} - \rho (\mathbf{v} \cdot \nabla) \mathbf{v}
+\end{equation}
+
+\subsection{Fractional Step Method}
+This section will explain the different modifications that were implemented in the model to solve the current test case. As mentioned above, there is a requirement to solve multiple transport variables at the same time that are mutually dependent. Since the velocity and pressure need to be computed simultaneously, the Fractional Step Method separates this process into three separate steps. The first step consists of evaluating the velocity field while ignoring the pressure field. This calculated velocity field will not be an accurate solution for the next time-step; however, it can be used to evaluate the pressure field at the next time-step. After that second step, the only remaining operation is to correct the calculated velocity field with the influence of the now known pressure field. The three steps can be summarized by the expressions shown in Eqs.~\ref{eqFSM1},~\ref{eqFSM2},~\ref{eqFSM3}, showcasing the methodology used to obtain the solution to this particular case. Since the two velocity components are calculated explicitly, there is no need to employ a numerical solver for those variables. On the other hand, the pressure equation will have the same structure as a diffusion equation as it can be seen in Eq.~\ref{eqFSM2}.
+
+\begin{equation}\label{eqFSM1}
+    \mathbf{v}^p = \mathbf{v}^n + \frac{\Delta t}{\rho} \left[ \frac{3}{2} R(\mathbf{v}^n) - \frac{1}{2} R(\mathbf{v}^{n-1}) \right]
+\end{equation}
+
+\begin{equation}\label{eqFSM2}
+    P_p = \frac{1}{a_p} (a_n P_N + a_s P_S + a_e P_E + a_w P_W - \frac{\rho \Delta S}{\Delta t} (u^p_e - u^p_w + v^p_n - v^p_s))
+\end{equation}
+
+\begin{equation}\label{eqFSM3}
+    \mathbf{v}_p = \mathbf{v}^p_p - \frac{\Delta t}{\rho} \nabla P^{n+1} 
+\end{equation}
+
+
+Since this is now a coupled solver solving for multiple variables instead of solving for a single one, the configuration file will now require the relevant details and information about every variable. As such, initial values and boundary conditions now need to be specified separately for the main solver variable and for the secondary, explicitly calculated, variables. In addition, a new Field probe was introduced specifically for the velocity field. Table~\ref{tabConfigNS} describes all the configuration parameters available for the current model.
 
 \begin{table}[ht]
 	\centering
@@ -38,13 +56,13 @@ This section will explain the different modifications that were implemented in t
 			& endTime & Last instant of the simulation. \\
 			& timeStep & Time increment after each instant. \\
 		\hline
-		\multirow{5}{*}{Physical Data} & PHI0 & Initial value for main solver variable. \\
-                           & VF0 & List with initial value for each component of velocity. \\
+		\multirow{7}{*}{Physical Data} & PHI0 & Initial value for main solver variable. \\
+                                       & \multirow{2}{*}{VF0} & List with initial value for each component of velocity. \\
 					       & \multirow{2}{*}{materials} & List of vectors with thermophysical properties corresponding to each material. \\
                            & velocityField & List of expressions for each component of the velocity field. \\
 		\hline
 		\multirow{5}{*}{Geometrical Data} & width & Dimension in the secondary axis. \\
-						  & \multirow{4}{*}{sections} & List of vectors indicating the distribution of materials in the simulation. Also includes amount of nodes and internal heat generation. \\
+						  & \multirow{3}{*}{sections} & List of vectors indicating the distribution of materials in the simulation. Also includes amount of nodes and internal heat generation. \\
 		\hline
 		\multirow{9}{*}{Mesh Data} & strength & Cubic algebraic mesh parameter. \\
 					   & centering & Cubic algebraic mesh parameter. \\
@@ -54,7 +72,7 @@ This section will explain the different modifications that were implemented in t
 					   & \multirow{2}{*}{N} & List specifying total number of nodes for each axis. \\
 					   & \multirow{2}{*}{refinement} & List of vectors specifying refinement configuration for each axis. \\
 		\hline
-		\multirow{2}{*}{Boundary Data} & \multirow{2}{*}{boundaries} & List of vectors specifying the boundary conditions on each side for the main solver variable. \\
+		\multirow{4}{*}{Boundary Data} & \multirow{2}{*}{boundaries} & List of vectors specifying the boundary conditions on each side for the main solver variable. \\
                                        & \multirow{2}{*}{boundariesVelocity} & List of vectors specifying the boundary conditions on each side for the velocity components. \\
 		\hline
 		\multirow{2}{*}{Probe Data} & \multirow{2}{*}{probes} & List of vectors specifying the probes configured for the simulation. \\
@@ -66,8 +84,14 @@ This section will explain the different modifications that were implemented in t
 	\label{tabConfigNS}
 \end{table}
 
-\section{Model Validation}
-As mentioned above, the model will be validated by comparing the results to given reference values for the Lid-Driven Case problem with $Re = 100, 400$ using both CDS and UDS. No numerical study will be included in this section as the velocity components are calculated explicitly and the pressure equation is solved using the same model described in previous chapters. Figure~\ref{}
+\subsection{Model Validation}
+As mentioned above, the model will be validated by comparing the results to given reference values for the Lid-Driven Case problem with $Re = 100, 400$ using both CDS and UDS. $Re$ is defined by Eq.~\ref{eqReynolds} No numerical study will be included in this section as the velocity components are calculated explicitly and the pressure equation is solved using the same model described in previous chapters. Figure~\ref{}
 
-%% INSERTAR IMAGENES Y COMENTAR
+\begin{equation}\label{eqReynolds}
+    Re = \frac{\rho U L}{\mu}
+\end{equation}
+
+PENDING PASTE PLOTS AND WRITE COMMENTS
+
+
 
