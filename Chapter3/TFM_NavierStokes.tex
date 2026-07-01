@@ -13,7 +13,7 @@ This chapter will describe the implementation of a numerical solver for 2D Navie
     \rho c_p \frac{\partial T}{\partial t} + \rho c_p \nabla (\mathbf{v} T) = \nabla (\lambda \nabla T) + \dot{q}_V
 \end{equation}
 
-As mentioned above, this model uses the Adams-Bashforth discretization method, which relies on two previous time-steps to evaluate the next iteration. Eq.~\ref{eqAdamsBashforth} shows the expression used for this discretization method, where $R(\mathbf{v})$ corresponds to the convective and diffusive terms evaluated at the corresponding time-step and is described by Eq.~\ref{eqRv}. The discretization for this expression will follow the discretization implemented in Chapter~\ref{chapConvection}.
+As mentioned above, this model uses the Adams-Bashforth discretization method, which relies on two different instants to evaluate the next iteration. Eq.~\ref{eqAdamsBashforth} shows the expression used for this discretization method, where $R(\mathbf{v})$ corresponds to the convective and diffusive terms evaluated at the corresponding time-step and is described by Eq.~\ref{eqRv}. The discretization for this expression will follow the discretization implemented in Chapter~\ref{chapConvection}.
 
 \begin{equation}\label{eqAdamsBashforth}
     \rho \frac{\mathbf{v}^{n+1} - \mathbf{v}^n}{\Delta t} = - \nabla P^{n+1} + \frac{3}{2} R(\mathbf{v}^n) - \frac{1}{2} R(\mathbf{v}^{n-1})
@@ -22,22 +22,6 @@ As mentioned above, this model uses the Adams-Bashforth discretization method, w
 \begin{equation}\label{eqRv}
     R(\mathbf{v}) = \mu \nabla^2 \mathbf{v} - \rho (\mathbf{v} \cdot \nabla) \mathbf{v}
 \end{equation}
-
-\subsection{Fractional Step Method}
-This section will explain the different modifications that were implemented in the model to solve the current test case. As mentioned above, there is a requirement to solve multiple transport variables at the same time that are mutually dependent. Since the velocity and pressure need to be computed simultaneously, the Fractional Step Method separates this process into three separate steps. The first step consists of evaluating the velocity field while ignoring the pressure field. This calculated velocity field will not be an accurate solution for the next time-step; however, it can be used to evaluate the pressure field at the next time-step. After that second step, the only remaining operation is to correct the calculated velocity field with the influence of the now known pressure field. The three steps can be summarized by the expressions shown in Eqs.~\ref{eqFSM1},~\ref{eqFSM2},~\ref{eqFSM3}, showcasing the methodology used to obtain the solution to this particular case. Since the two velocity components are calculated explicitly, there is no need to employ a numerical solver for those variables. On the other hand, the pressure equation will have the same structure as a diffusion equation as it can be seen in Eq.~\ref{eqFSM2}.
-
-\begin{equation}\label{eqFSM1}
-    \mathbf{v}^p = \mathbf{v}^n + \frac{\Delta t}{\rho} \left[ \frac{3}{2} R(\mathbf{v}^n) - \frac{1}{2} R(\mathbf{v}^{n-1}) \right]
-\end{equation}
-
-\begin{equation}\label{eqFSM2}
-    P_p = \frac{1}{a_p} (a_n P_N + a_s P_S + a_e P_E + a_w P_W - \frac{\rho \Delta S}{\Delta t} (u^p_e - u^p_w + v^p_n - v^p_s))
-\end{equation}
-
-\begin{equation}\label{eqFSM3}
-    \mathbf{v}_p = \mathbf{v}^p_p - \frac{\Delta t}{\rho} \nabla P^{n+1} 
-\end{equation}
-
 
 Since this is now a coupled solver solving for multiple variables instead of solving for a single one, the configuration file will now require the relevant details and information about every variable. As such, initial values and boundary conditions now need to be specified separately for the main solver variable and for the secondary, explicitly calculated, variables. In addition, a new Field probe was introduced specifically for the velocity field. Table~\ref{tabConfigNS} describes all the configuration parameters available for the current model.
 
@@ -84,14 +68,76 @@ Since this is now a coupled solver solving for multiple variables instead of sol
 	\label{tabConfigNS}
 \end{table}
 
+
+\subsection{Fractional Step Method}
+This section will explain the different modifications that were implemented in the model to solve the current test case. As mentioned above, there is a requirement to solve multiple transport variables at the same time that are mutually dependent. Since the velocity and pressure need to be computed simultaneously, the Fractional Step Method separates this process into three separate steps. The first step consists of evaluating the velocity field while ignoring the pressure field. This calculated velocity field will not be an accurate solution for the next time-step; however, it can be used to evaluate the pressure field at the next time-step. After that second step, the only remaining operation is to correct the calculated velocity field with the influence of the now known pressure field. The three steps can be summarized by the expressions shown in Eqs.~\ref{eqFSM1},~\ref{eqFSM2},~\ref{eqFSM3}, showcasing the methodology used to obtain the solution to this particular case. Since the two velocity components are calculated explicitly, there is no need to employ a numerical solver for those variables. On the other hand, the pressure equation will have the same structure as a diffusion equation as it can be seen in Eq.~\ref{eqFSM2}.
+
+\begin{equation}\label{eqFSM1}
+    \mathbf{v}^p = \mathbf{v}^n + \frac{\Delta t}{\rho} \left[ \frac{3}{2} R(\mathbf{v}^n) - \frac{1}{2} R(\mathbf{v}^{n-1}) \right]
+\end{equation}
+
+\begin{equation}\label{eqFSM2}
+    P^{n+1}_p = \frac{1}{a_p} (a_n P^{n+1}_N + a_s P^{n+1}_S + a_e P^{n+1}_E + a_w P^{n+1}_W - \frac{\rho \Delta S}{\Delta t} (u^p_e - u^p_w + v^p_n - v^p_s))
+\end{equation}
+
+\begin{equation}\label{eqFSM3}
+    \mathbf{v}_p = \mathbf{v}^p_p - \frac{\Delta t}{\rho} \nabla P^{n+1} 
+\end{equation}
+
+
+\subsubsection{Staggered Meshes}
+One may recall that the discretization model discussed presented earlier in this document requires the evaluation of flow at the boundary of each control volume. As such, rather than computing the pressure and velocity components using a standard mesh, it is beneficial to stagger independent meshes for each one of our variables. By doing this, the computed nodes for each variable are already located at the necessary positions for their interactions, eliminating the need for interpolation during the calculation process. Figure~\ref{figStaggeredMesh} show the distribution of nodes on top of the main variable mesh grid. 
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.45\linewidth]{Chapter3/Media/StaggeredMesh.png}
+    \caption{Staggered Mesh representation. Blue nodes correspond to pressure , red nodes to the first velocity component ($u = \mathbf{v}_x$), and green nodes to the second velocity component ($v = \mathbf{v}_y$).}
+    \label{figStaggeredMesh}
+\end{figure}
+
+
 \subsection{Model Validation}
-As mentioned above, the model will be validated by comparing the results to given reference values for the Lid-Driven Case problem with $Re = 100, 400$ using both CDS and UDS. $Re$ is defined by Eq.~\ref{eqReynolds} No numerical study will be included in this section as the velocity components are calculated explicitly and the pressure equation is solved using the same model described in previous chapters. Figure~\ref{}
+As mentioned above, the model will be validated by comparing the results to given reference values for the Lid-Driven Case problem with $Re = 100, 400$ using both CDS and UDS. $Re$ is defined by Eq.~\ref{eqReynolds} No numerical study will be included in this section as the velocity components are calculated explicitly and the pressure equation is solved using the same model described in previous chapters. The reference values given are distributed across the mid-sections of each axis of the domain ($x = 0.5, y = 0.5$), and will be plotted against the model solution for CDS and UDS. 
 
 \begin{equation}\label{eqReynolds}
     Re = \frac{\rho U L}{\mu}
 \end{equation}
 
-PENDING PASTE PLOTS AND WRITE COMMENTS
+Fig.~\ref{figNSVelComp} shows the comparison of the model results to the given reference values, demonstrating that the present model was able to replicate the expected behaviour. In addition, the results show a clear difference between the diffusion-dominant $Re = 100$ case, and the convection-dominant $Re = 400$ case. The diffusion-dominant case will have a smoother distribution as the effect of velocity gradients is not too impactful yet. Furthermore, since the effect of the velocity gradient is still small, the results for UDS and CDS will be practically the same. On the other hand, the profiles for the convection-dominant case show clearly defined inflection points and a noticeable separation between the results for UDS and CDS. When the simulation becomes convection-dominant, the effect of the velocity gradients will be more important, and the difference between the advective schemes will be more clear. Figures~\ref{figNSVelMag},~\ref{figNSVelVec} show the results obtained for the velocity field in steady-state for the simulations, both as a colormap of the magnitude, and as a vector map showing the flow direction.
+
+\begin{figure}[ht]
+	\centering
+	\begin{tabular}{cc}
+        \includegraphics[width=0.45\linewidth]{Chapter3/Media/NS100u.png} & \includegraphics[width=0.45\linewidth]{Chapter3/Media/NS100v.png} \\
+        \includegraphics[width=0.45\linewidth]{Chapter3/Media/NS400u.png} & \includegraphics[width=0.45\linewidth]{Chapter3/Media/NS400v.png} \\
+	\end{tabular}
+	\caption{Comparison of model results with results provided in problem statement.}
+	\label{figNSVelComp}
+\end{figure}
 
 
+\begin{figure}[ht]
+	\centering
+	\begin{tabular}{cc}
+        \includegraphics[width=0.45\linewidth]{Chapter3/Media/NS100UDS.png} & \includegraphics[width=0.45\linewidth]{Chapter3/Media/NS400UDS.png} \\
+        \scriptsize{\textit{Case 1}} & \scriptsize{\textit{Case 2}} \\
+        \includegraphics[width=0.45\linewidth]{Chapter3/Media/NS100CDS.png} & \includegraphics[width=0.45\linewidth]{Chapter3/Media/NS400CDS.png} \\
+        \scriptsize{\textit{Case 3}} & \scriptsize{\textit{Case 4}} \\
+	\end{tabular}
+	\caption{NS velocity profile for all test cases.}
+	\label{figNSVelMag}
+\end{figure}
+
+
+\begin{figure}[ht]
+	\centering
+	\begin{tabular}{cc}
+        \includegraphics[width=0.45\linewidth]{Chapter3/Media/NS100UDSVec.png} & \includegraphics[width=0.45\linewidth]{Chapter3/Media/NS400UDSVec.png} \\
+        \scriptsize{\textit{Case 1}} & \scriptsize{\textit{Case 2}} \\
+        \includegraphics[width=0.45\linewidth]{Chapter3/Media/NS100CDSVec.png} & \includegraphics[width=0.45\linewidth]{Chapter3/Media/NS400CDSVec.png} \\
+        \scriptsize{\textit{Case 3}} & \scriptsize{\textit{Case 4}} \\
+	\end{tabular}
+	\caption{NS velocity vector map for all test cases.}
+	\label{figNSVelVec}
+\end{figure}
 
