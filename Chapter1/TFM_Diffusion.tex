@@ -1,5 +1,5 @@
 \section{Pure Diffusion Solver}~\label{chapDiffusion}
-This chapter will explain the implementation of a pure diffusion model, which is the simplest version of a transport equation introduced in Chapter~\ref{chapIntroduction}. This scenario is obtained by setting the velocity field to zero ($\mathbf{v} = 0$), which eliminates the convective term from the expression. This case describes the physical phenomena of heat conduction through solid bodies, where energy is transmitted exclusively through diffusion as described by Fourier's Law, shown in Eq.~\eqref{eqFourier}. The simplicity of the model lends itself to be a good introduction for studying the numerical discretization and validating the core infrastructure of the code implementation. The core components \textbf{Material}, \textbf{Mesh}, \textbf{Discretizer}, \textbf{Solver}, and \textbf{Probe} were defined on this stage and will remain as the fundamental structure of the model moving forward.
+This chapter will explain the implementation of a pure diffusion model~\cite{FernandezOro, Versteeg2007}, which is the simplest version of a transport equation introduced in Chapter~\ref{chapIntroduction}. This scenario is obtained by setting the velocity field to zero ($\mathbf{v} = 0$), which eliminates the convective term from the expression. This case describes the physical phenomena of heat conduction through solid bodies, where energy is transmitted exclusively through diffusion as described by Fourier's Law, shown in Eq.~\eqref{eqFourier}. The simplicity of the model lends itself to be a good introduction for studying the numerical discretization and validating the core infrastructure of the code implementation. The core components \textbf{Material}, \textbf{Mesh}, \textbf{Discretizer}, \textbf{Solver}, and \textbf{Probe} were defined on this stage and will remain as the fundamental structure of the model moving forward.
 
 \begin{equation}~\label{eqFourier}
     q_{cond} = - \lambda \nabla T
@@ -11,17 +11,36 @@ Following the previously mentioned assumption of a stationary flow field, the co
         \rho c_P\frac{\partial T}{\partial t} = \nabla (\lambda \nabla T) + q_{V}
 \end{equation}
 
-By applying the FVM described in Chapter~\ref{chapIntroduction} and integrating over a control volume $V_P$, the following discretized form of the equation is shown in Eq.~\eqref{eqDiffDisc}.
+Integrating Eq.~\eqref{eqDiffGov} over the control volume $V_P$ and a time step $\Delta t$, and applying the Gauss divergence theorem to convert the diffusion term from a volume integral into a surface integral across the cell faces, gives:
+
+\begin{equation}~\label{eqDiffInt}
+    \rho c_P V_P \frac{T_P - T^0_P}{\Delta t} =
+    \oint_{\partial V_P} \lambda \nabla T \cdot \hat{n} \, dA + q_V V_P
+\end{equation}
+
+The surface integral is approximated as a discrete sum over the four cell faces. The face-normal gradient at each interface is evaluated by a central difference between the adjacent cell centroids, and the face conductivity $\lambda_k$ is computed from the harmonic mean of the adjacent cell values (Eq.~\eqref{eqHarmonicMean}):
+
+\begin{equation}~\label{eqDiffFaceSum}
+    \oint_{\partial V_P} \lambda \nabla T \cdot \hat{n} \, dA \approx
+      \lambda_w S_w \frac{T_W - T_P}{d_{PW}}
+    + \lambda_e S_e \frac{T_E - T_P}{d_{PE}}
+    + \lambda_s S_s \frac{T_S - T_P}{d_{PS}}
+    + \lambda_n S_n \frac{T_N - T_P}{d_{PN}}
+\end{equation}
+
+Substituting Eq.~\eqref{eqDiffFaceSum} into Eq.~\eqref{eqDiffInt} yields the fully discretized equation for node $P$:
 
 \begin{equation}~\label{eqDiffDisc}
 	\rho c_P V_P \frac{T_P - T^0_P}{\Delta t} = \lambda_w S_w \frac{T_W - T_P}{d_{PW}} + \lambda_e S_e \frac{T_E - T_P}{d_{PE}} + \lambda_s S_s \frac{T_S - T_P}{d_{PS}} + \lambda_n S_n \frac{T_N - T_P}{d_{PN}} + q_V V_P
 \end{equation}
 
-In addition, an important observation regarding pure-diffusion is that it requires the use of the harmonic to calculate the diffusion coefficient when the cell wall is located at a material interface. The expression used to obtained the harmonic mean between two adjacent nodes with different properties is shown in Eq.~\eqref{eqHarmonicMean}.
+An important consideration for pure-diffusion problems is the evaluation of the face diffusivity $\Gamma_k$ when a cell face lies at a material interface. A simple arithmetic mean would overestimate the conductance between two dissimilar materials; the correct choice is the harmonic mean, which is consistent with the series-resistance analogy for heat conduction:
 
 \begin{equation}~\label{eqHarmonicMean}
-    \lambda_k = \frac{2 \lambda _P \lambda_K}{\lambda_P + \lambda _K}
+    \Gamma_k = \frac{2 \Gamma_P \Gamma_K}{\Gamma_P + \Gamma_K}
 \end{equation}
+
+For the thermal conduction model of this chapter, $\Gamma \equiv \lambda$.
 
 By expanding Eq.~\eqref{eqDiffDisc} and reorganizing the terms the same expression shown in Eq.~\eqref{eqTransDisc} can be obtained for this particular problem. Table~\ref{tabDiffCoeff} shows a summary of the discretized coefficient expressions
 
@@ -31,10 +50,10 @@ By expanding Eq.~\eqref{eqDiffDisc} and reorganizing the terms the same expressi
         \hline
         Coefficient & Expression \\
         \hline
-        $a_W$ & $\dfrac{\lambda_w S_w}{d_PW}$ \\
-        $a_E$ & $\dfrac{\lambda_e S_e}{d_PE}$ \\
-        $a_S$ & $\dfrac{\lambda_s S_s}{d_PS}$ \\
-        $a_N$ & $\dfrac{\lambda_n S_n}{d_PN}$ \\
+        $a_W$ & $\dfrac{\lambda_w S_w}{d_{PW}}$ \\
+        $a_E$ & $\dfrac{\lambda_e S_e}{d_{PE}}$ \\
+        $a_S$ & $\dfrac{\lambda_s S_s}{d_{PS}}$ \\
+        $a_N$ & $\dfrac{\lambda_n S_n}{d_{PN}}$ \\
         $b_P$ & $a^0_P T^0_P + q_V V_P$ \\
         \hline
     \end{tabular}
@@ -60,12 +79,12 @@ Neumann boundary conditions assign the flux at the surface rather than the magni
     b_P \mathrel{+}= q_{BC} S_w \qquad
 \end{equation}
 
-Robin boundary conditions, also known as convection / hybrid boundary conditions, assigns a variable heat flux that relates the temperature at the node $T_P$ with the temperature of a far-away fluid $T_\infty$. The added conductance needs to be included in the diagonal term $a_P$ and to the RHS part of the equation.
+Robin boundary conditions, also known as convection / hybrid boundary conditions, impose a variable heat flux that relates the temperature at the node $T_P$ with the temperature of a far-away fluid $T_\infty$ through a convective heat transfer coefficient $h$. The resulting conductance term is added to the diagonal coefficient $a_P$ and to the RHS of the discretized equation.
 
 \begin{equation}~\label{eqDiffBCRob}
     a_W = 0 \qquad
-    a_P \mathrel{+}= \alpha S_w \qquad
-    b_P \mathrel{+}= \alpha S_w T_\infty \qquad
+    a_P \mathrel{+}= h S_w \qquad
+    b_P \mathrel{+}= h S_w T_\infty \qquad
 \end{equation}
 
 Implementation and validation of the 1D and 2D cases are discussed in the following subsections.

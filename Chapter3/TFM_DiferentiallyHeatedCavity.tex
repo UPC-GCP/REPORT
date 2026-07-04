@@ -1,1 +1,94 @@
-\subsection{Diferentially Heated Cavity}
+\subsection{Differentially Heated Cavity}~\label{secDHC}
+
+The Differentially Heated Cavity (DHC) extends the NS solver to thermally driven flows by activating the energy equation (Eq.~\eqref{eqNSEnergy}) and coupling it back to the momentum equation through buoyancy. The geometry is the same square cavity as in Section~\ref{secLDC}, but with all walls stationary (no-slip) and thermal boundary conditions applied: the left wall is held at a hot temperature $T_h$, the right wall at a cold temperature $T_c < T_h$, and the top and bottom walls are adiabatic ($\partial T / \partial n = 0$). Unlike the Lid-Driven Cavity, there is no mechanical forcing; the flow is driven entirely by the temperature difference $\Delta T = T_h - T_c$, which produces density variations that generate buoyancy forces.
+
+The density variation is handled through the \textbf{Boussinesq approximation}, which treats the fluid as incompressible everywhere except in the buoyancy term of the momentum equation, where a linear dependence of density on temperature is assumed:
+
+\begin{equation}\label{eqBoussinesq}
+    \rho \approx \rho_0\,\bigl[1 - \beta\,(T - T_\mathrm{ref})\bigr]
+\end{equation}
+
+where $\beta$ is the thermal expansion coefficient and $T_\mathrm{ref} = (T_h + T_c)/2$ is the midpoint reference temperature. Substituting Eq.~\eqref{eqBoussinesq} into the $y$-component of Eq.~\eqref{eqNSMomentum} adds a body-force source term:
+
+\begin{equation}\label{eqBuoyancy}
+    S_y = -\rho_0\,\beta\,(T - T_\mathrm{ref})\,g
+\end{equation}
+
+This term is positive (upward) where $T > T_\mathrm{ref}$ and negative (downward) where $T < T_\mathrm{ref}$, driving the familiar convection cell: hot fluid near the left wall rises, travels along the top, descends along the cold right wall, and returns along the bottom. Equation~\eqref{eqBuoyancy} is treated as an explicit source in $b_P$ of the $y$-momentum discretization, evaluated at the current time step. The energy equation is discretized using the convection-diffusion FVM of Chapter~\ref{chapConvection}, with $\phi \equiv T$ and $\Gamma \equiv \lambda$, advanced by the same Adams-Bashforth scheme.
+
+The flow regime is characterised by the \textbf{Rayleigh number}:
+
+\begin{equation}\label{eqRayleigh}
+    Ra = \frac{g\,\beta\,\Delta T\,H^3}{\nu\,\alpha}
+\end{equation}
+
+where $H$ is the cavity height, $\nu = \mu/\rho_0$ is the kinematic viscosity, and $\alpha = \lambda/(\rho_0 c_p)$ is the thermal diffusivity. The Rayleigh number encodes the ratio of buoyancy driving to diffusive resistance. At low $Ra$, diffusion dominates and the temperature field is nearly linear across the cavity with minimal flow velocity. As $Ra$ increases, convection intensifies, the isotherms bow progressively, and thin thermal boundary layers form on the hot and cold walls. Four cases are tested: $Ra = 10^3$, $10^4$, $10^5$, and $10^6$, at fixed Prandtl number $Pr = \nu/\alpha = 0.71$ (air). The reference solution is provided by de Vahl Davis~\cite{deVahlDavis1983}.
+
+Validation is performed against the benchmark values of de Vahl Davis~\cite{deVahlDavis1983} using the average Nusselt number at the hot wall, defined as:
+
+\begin{equation}\label{eqNusselt}
+    \overline{Nu} = -\frac{H}{\Delta T}\,\left\langle\frac{\partial T}{\partial x}\right\rangle_{x=0}
+\end{equation}
+
+where $\langle \cdot \rangle$ denotes the wall-averaged value. The Nusselt number compares the actual heat transfer rate to the conductive rate across a stagnant fluid layer of the same thickness; it is therefore a single scalar that integrates the accuracy of both the velocity and temperature fields. Centreline profiles of $u(x = 0.5)$ and $v(y = 0.5)$ are also compared to provide a spatially resolved assessment.
+
+
+\subsubsection{Model Implementation}
+
+The DHC solver extends the Lid-Driven Cavity model with two modifications. First, the energy equation is activated and coupled to the momentum solver: at each time step, after the velocity field $\mathbf{v}^{n+1}$ is obtained from the FSM algorithm, the energy equation is advanced using the updated velocity to evaluate the convective fluxes in $R(T)$. The temperature field then provides the buoyancy source term $S_y$ (Eq.~\eqref{eqBuoyancy}) for the next time step's $y$-momentum equation. This explicit coupling is consistent with the Adams-Bashforth scheme and does not require inner iteration between the velocity and temperature equations. Second, the thermal boundary conditions are specified through the boundary configuration parameters: Dirichlet conditions for the left ($T_h$) and right ($T_c$) walls, and Neumann zero-flux conditions for the top and bottom walls.
+
+The dimensionless parameters $\rho_0 = 1$, $c_p = 1$, and $H = 1$ are fixed throughout, with $\mu$, $\lambda$, and $\beta$ chosen to achieve the target $Ra$ and $Pr$ for each case. Initial conditions are $\mathbf{v}^0 = \mathbf{0}$ and a linear temperature profile $T^0(x) = T_h - \Delta T \cdot x / H$, which provides a smooth start and reduces the transient duration.
+
+
+\subsubsection{Numerical Parameter Study}
+
+The mesh refinement study uses the $Ra = 10^5$ base case, which presents boundary layers thin enough to be resolution-sensitive while remaining tractable at moderate mesh sizes. The $L_2$ error of the hot-wall temperature gradient profile — from which $\overline{Nu}$ is computed — is evaluated against the de Vahl Davis reference. The tested mesh sizes are summarised in Table~\ref{tabDHCNumerical}.
+
+\begin{table}[ht]
+    \centering
+    \begin{tabular}{|c|c|}
+        \hline
+        Parameter & Values \\
+        \hline
+        $N$ & 50,\ \textbf{100},\ 200,\ 400 \\
+        \hline
+    \end{tabular}
+    \caption{Mesh sizes tested in the spatial refinement study for the Differentially Heated Cavity. Bold value indicates the resolution selected for validation.}
+    \label{tabDHCNumerical}
+\end{table}
+
+\paragraph{Mesh Refinement}
+The average Nusselt number $\overline{Nu}$ at the hot wall is computed for each mesh and compared against the de Vahl Davis reference for $Ra = 10^5$. A plot of $\overline{Nu}$ vs.\ $N$ identifies the resolution at which the boundary layer is adequately resolved and the result ceases to change appreciably. The results are presented in Fig.~\ref{figDHCRefinement}.
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.55\linewidth]{Chapter3/Media/DHCNuRefinement.png}
+    \caption{Mesh refinement study for the Differentially Heated Cavity ($Ra = 10^5$). Average Nusselt number $\overline{Nu}$ at the hot wall as a function of nodes per side $N$, compared against the de Vahl Davis reference~\cite{deVahlDavis1983}.}
+    \label{figDHCRefinement}
+\end{figure}
+
+
+\subsubsection{Model Validation}
+
+The model is validated across all four Rayleigh number cases using the mesh resolution established by the refinement study. Three quantities are reported: the average Nusselt number $\overline{Nu}$ at the hot wall, which provides a global scalar metric for validation against the de Vahl Davis benchmarks~\cite{deVahlDavis1983}; the local Nusselt number distribution $Nu(y)$ along the hot wall, which reveals the spatial structure of the heat transfer; and the steady-state temperature colormaps, which give a qualitative picture of the transition from conduction-dominated ($Ra = 10^3$) to convection-dominated ($Ra = 10^6$) regimes. The centreline velocity profiles ($u$ at $x = 0.5$, $v$ at $y = 0.5$) are reserved for a separate comparison once the corresponding reference data are available. The results are presented in Figs.~\ref{figDHCNu},~\ref{figDHCNuLocal}, and~\ref{figDHCTemp}.
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.65\linewidth]{Chapter3/Media/DHCNuBenchmark.png}
+    \caption{Average Nusselt number $\overline{Nu}$ at the hot wall for each Rayleigh number case, compared against de Vahl Davis~\cite{deVahlDavis1983} benchmark values.}
+    \label{figDHCNu}
+\end{figure}
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.55\linewidth]{Chapter3/Media/DHCNuLocal.png}
+    \caption{Local Nusselt number $Nu(y)$ along the hot wall ($x = 0$) at $Ra = 10^6$ and $N = 128$. The sharp peak near $y = 0$ reflects the thin thermal boundary layer at the base of the hot wall where the cold fluid arrives from the bottom recirculation.}
+    \label{figDHCNuLocal}
+\end{figure}
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=\linewidth]{Chapter3/Media/DHCTBenchmark.png}
+    \caption{Steady-state temperature distribution for each Rayleigh number case. The growing asymmetry of the isotherms from $Ra = 10^3$ (near-linear conduction profile) to $Ra = 10^6$ (thin boundary layers on both walls) reflects the increasing dominance of convective transport.}
+    \label{figDHCTemp}
+\end{figure}

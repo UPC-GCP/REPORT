@@ -1,25 +1,55 @@
 \section{Convection-Diffusion Model}~\label{chapConvection}
 
-This chapter will explain the implementation of a convection-diffusion model. In this case, the complete transport equation shown in Chapter~\ref{chapIntroduction} needs to be implemented, considering both the diffusive and convective elements. The model implementation will be validated by solving the Smith-Hutton case and comparing the results to available reference values. In addition, the implementation described in this chapter will follow the discretization model described by Patankar~\cite{Patankar}, which proposes a generalized formulation that considers the various convective schemes available for numerical resolution. Based on said formulation, the discretized coefficients for a 2D model are shown below in Eqs.~\ref{eqConv_aw},~\ref{eqConv_ae},~\ref{eqConv_as},~\ref{eqConv_an},~\ref{eqConv_ap},~\ref{eqConv_bp}.
+This chapter extends the pure-diffusion solver of Chapter~\ref{chapDiffusion} to the full convection-diffusion transport equation by activating the convective term. While the diffusive term is elliptic and distributes information in all directions, the convective term is hyperbolic: it propagates information strictly in the direction of the flow. This directional nature introduces new numerical challenges. A central-difference approximation of the convective flux is second-order accurate but produces oscillations when convection dominates diffusion; a pure upwind approximation is stable at any Peclet number but reduces to first-order accuracy. Patankar~\cite{Patankar} proposed a generalised formulation that unifies these and intermediate schemes through a single coefficient template, allowing the analyst to select the scheme most appropriate for the problem at hand. The model will be validated against the Smith-Hutton benchmark~\cite{SmithHutton1982}, a widely used test for convection-diffusion discretisations.
+
+Activating the convective term in the general transport equation (Eq.~\eqref{eqTransGov}) gives the convection-diffusion governing equation:
+
+\begin{equation}~\label{eqConvGov}
+    \frac{\partial (\rho \phi)}{\partial t} + \nabla \cdot (\rho \mathbf{v} \phi) = \nabla \cdot (\Gamma \nabla \phi) + S_\phi
+\end{equation}
+
+where $\phi$ is the transported scalar, $\mathbf{v}$ is the prescribed velocity field, and $\Gamma$ is the diffusivity. Unlike Chapter~\ref{chapDiffusion} where $\phi \equiv T$ and $\Gamma \equiv \lambda$, both quantities are kept general here since the solver is first validated against a passive scalar transport benchmark before being extended to the Navier-Stokes model in Chapter~\ref{chapNavierStokes}.
+
+Integrating Eq.~\eqref{eqConvGov} over the control volume $V_P$ and a time step $\Delta t$, and applying the divergence theorem to both the convective and diffusive terms — following the same procedure as in Chapter~\ref{chapDiffusion} — converts them into face integrals. At each face $k$, the result is a diffusive contribution $D_k(\phi_K - \phi_P)$ and a convective contribution $F_k \phi_k$. The two face quantities that characterize these contributions are defined as follows.
+
+The \textbf{diffusive conductance} $D_k$ measures the ease of diffusive transport across face $k$:
+
+\begin{equation}~\label{eqDiffConductance}
+    D_k = \frac{\Gamma_k S_k}{d_{PK}}
+\end{equation}
+
+The \textbf{convective flux} $F_k$ carries the mass flow rate through face $k$, defined positive in the direction of the outward normal:
+
+\begin{equation}~\label{eqConvFlux}
+    F_k = \rho\, v_k\, S_k
+\end{equation}
+
+Their ratio defines the cell-face \textbf{Peclet number} $Pe_k$, which quantifies the relative strength of convection over diffusion at each face:
+
+\begin{equation}~\label{eqPeclet}
+    Pe_k = \frac{F_k}{D_k}
+\end{equation}
+
+When $|Pe_k| \ll 1$ the transport is diffusion-dominated and the face value $\phi_k$ is well approximated by a central average of the two adjacent cell values; when $|Pe_k| \gg 1$ the transport is convection-dominated and $\phi_k$ must be taken from the upwind node to maintain stability. Patankar's formulation encodes this behaviour through the scheme function $A(|Pe|)$, which modulates the diffusive weight so that the combined face flux always satisfies diagonal dominance. Based on this formulation, the discretized coefficients for a 2D interior cell are:
 
 \begin{equation}~\label{eqConv_aw}
-    a_W = D_w A(|P_w|) + ||F_w, 0||
+    a_W = D_w A(|Pe_w|) + \max(F_w,\, 0)
 \end{equation}
 
 \begin{equation}~\label{eqConv_ae}
-    a_E = D_e A(|P_e|) + ||-F_e, 0||
+    a_E = D_e A(|Pe_e|) + \max(-F_e,\, 0)
 \end{equation}
 
 \begin{equation}~\label{eqConv_as}
-    a_S = D_s A(|P_s|) + ||F_s, 0||
+    a_S = D_s A(|Pe_s|) + \max(F_s,\, 0)
 \end{equation}
 
 \begin{equation}~\label{eqConv_an}
-    a_N = D_n A(|P_n|) + ||-F_n, 0||
+    a_N = D_n A(|Pe_n|) + \max(-F_n,\, 0)
 \end{equation}
 
 \begin{equation}~\label{eqConv_ap}
-    a_P = a_W + a_E + a_S + a_N + a^0_P
+    a_P = a_W + a_E + a_S + a_N + a^0_P - (F_e - F_w + F_n - F_s)
 \end{equation}
 
 \begin{equation}~\label{eqConv_bp}
@@ -27,27 +57,51 @@ This chapter will explain the implementation of a convection-diffusion model. In
 \end{equation}
 
 \begin{equation*}
-    a^0_P = \frac{\rho^0_P V_P}{\Delta t}
+    a^0_P = \frac{\rho V_P}{\Delta t}
 \end{equation*}
 
-As mentioned above, this discretization model includes the additional $A(|P|)$ term, which corresponds to a different function depending on the convective scheme. A summary of the expressions used for the convective schemes implemented in the model is shown in Table~\ref{tabConvSchemes}.
+The $\max(\cdot,0)$ terms ensure that the convective contribution to $a_W$ is active only when flow arrives from the west (i.e.\ $F_w > 0$), and similarly for the other faces: each neighbour coefficient captures the information carried into cell $P$ by the flow. The last grouped term in $a_P$ is the discrete continuity residual $(F_e - F_w) + (F_n - F_s)$, which represents the net mass flux leaving the cell; for a divergence-free velocity field it vanishes exactly, otherwise it acts as a correction to maintain conservation. A summary of the $A(|Pe|)$ expressions for the implemented schemes is shown in Table~\ref{tabConvSchemes}.
 
 \begin{table}[ht]
     \centering
     \begin{tabular}{|c|c|}
         \hline
-        Scheme & $A(|P|)$ \\
+        Scheme & $A(|Pe|)$ \\
         \hline
-        CDS & $1 - 0.5 |P|$ \\
+        CDS & $1 - 0.5\,|Pe|$ \\
         UDS & $1$ \\
-        Hybrid & $\Vert 0, 1 - 0.5 |P| \Vert$ \\
-        Power Law & $\Vert 0, (1 - 0.1|P|)^5 \Vert$ \\
-        Exponential & $\frac{|P|}{e^{|P|} - 1}$ \\
+        Hybrid & $\max\!\bigl(0,\;1 - 0.5\,|Pe|\bigr)$ \\
+        Power Law & $\max\!\bigl(0,\;(1 - 0.1\,|Pe|)^5\bigr)$ \\
+        Exponential & $\dfrac{|Pe|}{e^{|Pe|} - 1}$ \\
         \hline
     \end{tabular}{}
-    \caption{\textit{The function $A(|P|)$ for different schemes}~\cite{Patankar}.}
+    \caption{Scheme function $A(|Pe|)$ for each implemented convective discretisation~\cite{Patankar}.}
     \label{tabConvSchemes}
 \end{table}
+
+Each entry in Table~\ref{tabConvSchemes} corresponds to a different face interpolation rule. The \textbf{CDS} scheme computes $\phi_k$ as a linear average of the two adjacent cell values; this is second-order accurate but $A(|Pe|) = 1 - 0.5|Pe|$ becomes negative for $|Pe| > 2$, which violates diagonal dominance and leads to unbounded oscillations. The \textbf{UDS} scheme always takes $\phi_k$ from the upwind cell, giving $A(|Pe|) = 1$ for all Peclet numbers and unconditional diagonal dominance at the cost of first-order accuracy; the truncation error manifests as artificial numerical diffusion proportional to $\rho v_k \Delta x / 2$. The \textbf{Hybrid} scheme applies CDS where $|Pe_k| \leq 2$ and switches to UDS above that threshold — exactly where the CDS coefficient would turn negative — providing a pragmatic stability guarantee with improved accuracy in low-Peclet regions. The \textbf{Power Law} scheme transitions more smoothly between regimes through a fifth-order polynomial approximation of the exponential solution. The \textbf{Exponential} scheme is the exact analytical solution of the steady 1D convection-diffusion equation at a face, making it the most accurate interpolation available; it is included as a reference baseline but is rarely used in practice due to the cost of evaluating exponentials at every face each iteration.
+
+\subsection{Boundary Conditions}
+The boundary condition framework introduced in Chapter~\ref{chapDiffusion} is extended here to account for the convective term. Dirichlet and Neumann conditions are both supported, though the Robin boundary condition is not implemented in this chapter: the physical scenarios studied from this point onwards involve solid walls or prescribed velocity inflows and outflows, none of which require the convective heat transfer coupling that Robin conditions model. A second structural change is the introduction of \textbf{ghost nodes}: instead of placing the first interior node at a half-cell distance from the wall (as in Chapter~\ref{chapDiffusion}), a layer of auxiliary nodes is placed symmetrically just outside each boundary. The boundary condition is imposed by prescribing the value of these ghost nodes, which simplifies the handling of the convective flux since the face lies exactly halfway between the ghost node and the first interior node. The wall distance used in the diffusive conductance $D_k$ is therefore the full spacing between the ghost node and node $P$. The explanation is given for a west boundary; it applies to all other faces with their respective coefficients.
+
+Dirichlet boundary conditions prescribe the value of $\phi$ at the wall. Since $\phi_{BC}$ is known, both the diffusive and convective fluxes through the west face become explicit source terms. For an inflow face ($F_w > 0$, flow entering from the west), the upwind value used by the convective scheme is $\phi_{BC}$ itself:
+
+\begin{equation}~\label{eqConvBCDir}
+    a_W = 0 \qquad
+    a_P \mathrel{+}= D_w A(|Pe_w|) + \max(F_w,\,0) \qquad
+    b_P \mathrel{+}= \bigl[D_w A(|Pe_w|) + \max(F_w,\,0)\bigr]\,\phi_{BC}
+\end{equation}
+
+For an outflow face ($F_w < 0$), the $\max(F_w, 0)$ term vanishes and only the diffusive conductance contributes, consistent with the fact that the flow carries information away from the boundary.
+
+Neumann boundary conditions prescribe the diffusive flux normal to the wall. The most common case in this chapter is the \textbf{zero-gradient} condition $\partial \phi / \partial n = 0$, applied at outflow boundaries. This is implemented by setting the ghost node value equal to that of the first interior node, which makes the diffusive conductance contribution vanish identically. The convective flux at the outflow face is then evaluated using the interior node value $\phi_P$, which is already implicit in $a_P$ and requires no explicit source addition:
+
+\begin{equation}~\label{eqConvBCNeu}
+    a_W = 0 \qquad
+    b_P \mathrel{+}= \dot{q}_{BC}\,S_w
+\end{equation}
+
+For the adiabatic case ($\dot{q}_{BC} = 0$) used at outflow boundaries, the equation simplifies to $a_W = 0$ with no additions to $a_P$ or $b_P$.
 
 % Sections
 \input{Chapter2/TFM_Convection2D}

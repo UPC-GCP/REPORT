@@ -21,7 +21,7 @@ In this section, the implementation of a heat conduction model for the \textbf{4
         M4 & 2500 & 930 & 140 \\
         \hline
     \end{tabular}
-    \caption{}
+    \caption{Thermophysical properties of the four materials in the domain.}
     \label{tab2DMaterials}
 \end{table}
 
@@ -31,18 +31,18 @@ In this section, the implementation of a heat conduction model for the \textbf{4
         \hline
         Cavity Wall & Boundary Condition \\
         \hline
-        West & \textbf{Robin}: In contact with fluid at $T_f = 33 ^\circ C$ and $\alpha = 9 W/(m^2 K)$ \\
+        West & \textbf{Robin}: In contact with fluid at $T_f = 33 ^\circ C$ and $h = 9 \, W/(m^2 K)$ \\
         East & \textbf{Dirichlet}: Uniform temperature $T(t) = 8 + 0.005 t ^\circ C$ \\
-        South & \textbf{Dirichlet}: Uniform temprature $T = 23 ^\circ C$ \\
+        South & \textbf{Dirichlet}: Uniform temperature $T = 23 ^\circ C$ \\
         North & \textbf{Neumann}: Uniform $\dot{Q}_{flow}$ \\
         \hline
     \end{tabular}
-    \caption{Boundary conditions for the }
+    \caption{Boundary conditions for the 4 Materials Case domain.}
     \label{tab4MaterialBC}
 \end{table}
 
 
-\subsection{Model Implementation}
+\subsubsection{Model Implementation}
 The model developed for the 2D case will follow the same discretization proposed earlier for the 1D case. However, some modifications to the code structure were needed to support the new functionalities. For example, Probe was expanded to support different types of probes with a better control over the region of the domain that is desired. A summary of the modified parameters included in this iteration of the model is shown in Table~\ref{tabConfig2D}, summarizing the new parameters in the configuration file. As shown, Probes have now been added as a configurable parameter to allow the user to choose which data is being saved. In addition, refinement was modified to be defined independently for each axis and in separate regions to allow the user better control over the mesh. Furthermore, a Medic class was also included to handle diagnostics and validation of energy conservation in the system. This class is also used as the central tool for debugging as it can easily be modified to log any information relevant to the model.
 
 \begin{table}[ht]
@@ -107,17 +107,16 @@ The results obtained from the tests explained above are shown in Figure \ref{fig
 \end{figure}
 
 \subsubsection{Model Validation}
-In the same way as done in Section \ref{secDiffusion1D}, boundary conditions were independently analyzed to validate proper implementation in the model by comparing it to the steady-state analytical solution. To simulate this behaviour, an adiabatic Neumann boundary condition ($\frac{\partial T}{\partial n} = 0$) was applied on the faces of the secondary axis in each test. On the other hand, the boundary conditions for the primary axis in the test were configured following the same testing plan described in Section \ref{secDiffusion1D}. The results obtained in this validation successfully replicated the expected behaviour and produced the same plots as those seen in Figure \ref{figDiff1DAnalSol} for each axis. Furthermore, a comparison with the \textit{Exercise 3: 4 Materials Case} will be used as a benchmark to complete the validation of the model.
+As a preliminary step, the three boundary condition types (Dirichlet, Neumann, and Robin) were independently verified in 2D by applying an adiabatic Neumann condition ($\partial T / \partial n = 0$) on the faces of the secondary axis, effectively reducing the problem to a 1D configuration along the primary axis. The results successfully replicated the steady-state profiles validated in Section~\ref{secDiffusion1D} for each axis, confirming that the boundary condition implementation is correct in two dimensions.
 
-\paragraph{4 Materials Case}
-The results obtained for \textit{Exercise 3: 4 Materials Case} are shown in Fig. \ref{figDiff2D4Materials}. As mentioned above, this is a transient simulation and there is no analytical solution available to compare the results with. Instead, this case provides reference values for two separate points at different instants of the simulation. As seen in the results, the model was able to match the values provided for points $[0.65, 0.56]$ and $[0.74, 0.72]$; as well as showing a temperature distribution consistent with the provided time instants.
+The primary benchmark for this chapter is the \textbf{4 Materials Case}~\cite{}, whose results are shown in Fig.~\ref{figDiff2D4Materials}. Since this is a transient simulation, no closed-form analytical solution exists; validation is instead performed against reference temperatures at two probe locations, $[0.65, 0.56]$ and $[0.74, 0.72]$, at prescribed time instants. The model successfully matched both reference values and produced a temperature distribution consistent with the expected evolution of the domain.
 
 \begin{figure}[ht]
 	\centering
 	\begin{tabular}{cc}
 		\includegraphics[width=0.45\linewidth]{Chapter1/Media/4MaterialsPoint.png} & \includegraphics[width=0.45\linewidth]{Chapter1/Media/4MaterialsMap.png} \\
 	\end{tabular}
-	\caption{Comparison of model results with results provided in problem statement.}
+	\caption{Comparison of probe temperatures against reference values (left) and steady-state temperature distribution (right) for the 4 Materials Case.}
 	\label{figDiff2D4Materials}
 \end{figure}
 

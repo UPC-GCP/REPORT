@@ -1,5 +1,5 @@
 \subsection{1D Transient Conduction - 1D Rod Case}~\label{secDiffusion1D}
-In this section, the implementation of the heat conduction model for the \textbf{1D Rod Case} will be developed. The problem consists of a thin $1 m$  bar with adiabatic walls on the south/north faces and Dirichlet boundary conditions for the west/east faces. The west wall is set at $T_w = 100 ^\circ C$, while the eastern wall is set at $T_e = 20 ^\circ C$, with initial conditions set at $T_0 = 30 ^\circ C$. Furthermore, the rod is defined as being made of copper with properties $\lambda = 400 W/(m \cdot K)$, $\rho = 8960 kg/m^3$, and $c_P = 380 J/(kg \cdot K)$. Figure~\ref{fig1DRod}
+In this section, the implementation of the heat conduction model for the \textbf{1D Rod Case} will be developed. The problem consists of a thin $1 m$  bar with adiabatic walls on the south/north faces and Dirichlet boundary conditions for the west/east faces. The west wall is set at $T_w = 100 ^\circ C$, while the eastern wall is set at $T_e = 20 ^\circ C$, with initial conditions set at $T_0 = 30 ^\circ C$. Furthermore, the rod is defined as being made of copper with properties $\lambda = 400 W/(m \cdot K)$, $\rho = 8960 kg/m^3$, and $c_P = 380 J/(kg \cdot K)$. A schematic of the problem is shown in Figure~\ref{fig1DRod}.
 
 \begin{figure}[ht]
     \centering
@@ -60,11 +60,30 @@ An additional decision to make when solving this kind of problems is the numeric
 
 
 \paragraph{Gauss-Seidel}
-The GS method solves linear systems by iteratively cycling through each node in sequence and updating them by using the most recent values from its adjacent nodes. Each cell needs to be calculated directly by using Eq.~\eqref{eqSolverGS}, which delays the propagation of information from one cell to the others. While convergence is a guarantee when the matrix is diagonally dominant, it is really susceptible to mesh size as it will directly impact the number of operations.
+The GS method solves linear systems by iteratively cycling through each node in sequence and updating them by using the most recent values from its adjacent nodes. Each cell needs to be calculated directly by using Eq.~\eqref{eqSolverGS}, which delays the propagation of information from one cell to the others. While convergence is a guarantee when the matrix is diagonally dominant, it is susceptible to mesh size as it will directly impact the number of operations.
 
 \begin{equation}~\label{eqSolverGS}
-    T^{n+1}_P = \frac{1}{a_P} (b_P - \sum_{k} a_k T^*_{k})
+    T^{n+1}_P = \frac{1}{a_P} \left( b_P - \sum_{k \neq P} a_k T^*_{k} \right)
 \end{equation}
+
+\begin{algorithm}[ht]
+\caption{Gauss-Seidel iterative solver}
+\label{algGS}
+\begin{algorithmic}[1]
+    \Require Coefficient matrix $A$, RHS vector $\mathbf{b}$, initial guess $\mathbf{T}^0$, tolerance $\varepsilon$, maximum iterations $k_{\max}$
+    \Ensure Solution vector $\mathbf{T}$
+    \State $\mathbf{T} \gets \mathbf{T}^0$
+    \For{$k = 1$ \textbf{to} $k_{\max}$}
+        \For{$i = 1$ \textbf{to} $N$}
+            \State $T_i \gets \dfrac{1}{a_{ii}} \!\left( b_i - \displaystyle\sum_{j \neq i} a_{ij}\, T_j \right)$
+        \EndFor
+        \If{$\|\mathbf{b} - A\mathbf{T}\| < \varepsilon$}
+            \State \textbf{break}
+        \EndIf
+    \EndFor
+    \Return $\mathbf{T}$
+\end{algorithmic}
+\end{algorithm}
 
 
 \paragraph{Conjugate Gradient}
@@ -76,9 +95,32 @@ The CG method is an iterative Krylov subspace solver designed specifically for S
 
 This guarantees that no iteration undoes the progress made by previous ones. Because of this capacity of propagating information, CG converges in maximum $N$ iterations, being $N$ the amount of unknowns. It is also important to highlight that CG is only valid for SPD systems. As it will be explained in Chapter~\ref{chapConvection}, once symmetry is broken due to the convective term, the solver algorithm needs to be changed to a more generalized variant to be able to handle non-SPD scenarios.
 
+\begin{algorithm}[ht]
+\caption{Conjugate Gradient solver}
+\label{algCG}
+\begin{algorithmic}[1]
+    \Require SPD coefficient matrix $A$, RHS vector $\mathbf{b}$, initial guess $\mathbf{T}^0$, tolerance $\varepsilon$, maximum iterations $k_{\max}$
+    \Ensure Solution vector $\mathbf{T}$
+    \State $\mathbf{r}^0 \gets \mathbf{b} - A\mathbf{T}^0$;\quad $\mathbf{p}^0 \gets \mathbf{r}^0$;\quad $\mathbf{T} \gets \mathbf{T}^0$
+    \For{$k = 0, 1, 2, \ldots, k_{\max}$}
+        \State $\alpha_k \gets \dfrac{\mathbf{r}^k \cdot \mathbf{r}^k}{\mathbf{p}^k \cdot A\,\mathbf{p}^k}$
+        \State $\mathbf{T}^{k+1} \gets \mathbf{T}^k + \alpha_k\,\mathbf{p}^k$
+        \State $\mathbf{r}^{k+1} \gets \mathbf{r}^k - \alpha_k\, A\,\mathbf{p}^k$
+        \If{$\|\mathbf{r}^{k+1}\| < \varepsilon$}
+            \State \textbf{break}
+        \EndIf
+        \State $\beta_k \gets \dfrac{\mathbf{r}^{k+1} \cdot \mathbf{r}^{k+1}}{\mathbf{r}^k \cdot \mathbf{r}^k}$
+        \State $\mathbf{p}^{k+1} \gets \mathbf{r}^{k+1} + \beta_k\,\mathbf{p}^k$
+    \EndFor
+    \Return $\mathbf{T}^{k+1}$
+\end{algorithmic}
+\end{algorithm}
+
 
 \paragraph{Results}
-These two metrics will be used to evaluate the performance of the solvers. Only one will be used to perform the numerical parameter studies shown below; as such, these metrics will be used to compare both solutions. The base simulation used in this study will be the \textbf{1D Rod Case} described by PENDING CITATION~\cite{}, with the addition of an internal heat source for a better comparison with the steady-state analytical solution. This simulation will use $N = 100$, $\Delta t = 0.5$ and a Crank-Nicolson scheme with a uniform mesh. The results for both cases are shown in Figure \ref{figDiffCompSolver}. In both metrics, it can be seen that CG outperforms GS by a considerable margin; converging faster and obtaining lower residue. As mentioned above, the CG algorithm was designed specifically for SPD coefficient matrices, which is the case for a pure-diffusion model. As described above, CG computes the conjugated search directions of all elements in the matrix, which guarantees convergence in at most $N$ steps. On the other hand, GS updates one node at a time using the most recent values and propagates information one cell per iteration, making it slower than CG. From these results, the decision to use CG for the numerical solver was made.
+Solver performance is evaluated using two metrics: the number of inner iterations required to reach convergence at each time-step, and the final residual $\|\mathbf{b} - A\mathbf{T}\|$ after convergence. The comparison is carried out on the \textbf{1D Rod Case}~\cite{} extended with an internal heat source $q_V$, which introduces a parabolic steady-state profile that can be directly compared against the analytical solution given by Eq.~\eqref{eq1DAnalyticalSol}. Both solvers use $N = 100$ nodes, $\Delta t = 0.5\,\text{s}$, a Crank-Nicolson temporal scheme, and a uniform mesh. The results are shown in Figure~\ref{figDiffCompSolver}.
+
+CG outperforms GS by a considerable margin on both metrics. This is consistent with the structural properties described above: the diffusion matrix is SPD, so CG propagates information globally through its $A$-conjugate search directions and is guaranteed to converge in at most $N$ steps. GS updates nodes one at a time, propagating information only one cell per iteration, and therefore requires many more sweeps to resolve long-range temperature gradients. Based on these results, CG was selected as the solver for all subsequent numerical studies in this chapter.
 
 \begin{figure}[ht]
     \begin{tabular}{cc}
@@ -122,7 +164,7 @@ The results obtained from the tests explained above are shown in Figure \ref{fig
 
 
 \paragraph{$N$ Sweep}
-The results obtained for the tests explained above are shown in Figure \ref{figDiffResults1DB}. Similarly to the previous case, the explicit scheme is a direct calculation and does not require more iterations. In addition, both Crank-Nicolson and implicit schemes show an increase in the number of iterations for the Crank-Nicolson and implicit schemes, suggesting better performance for Crank-Nicolson as the mesh gets finer. Since a larger mesh means more finite volumes, the amount of calculations performed by the model will increase. Compared to the analytical solution, the explicit scheme still showed higher values when compared to the Crank-Nicolson and implicit schemes; however, it seems to get closer as the number of nodes increases. In terms of computation time, both the Crank-Nicolson and implicit schemes saw a slight increase, while the explicit scheme saw a major difference as the mesh got finer.
+The results obtained for the tests explained above are shown in Figure \ref{figDiffResults1DB}. Similarly to the previous case, the explicit scheme is a direct calculation and does not require more iterations. In addition, both the Crank-Nicolson and implicit schemes show an increase in the number of iterations as the mesh is refined, with Crank-Nicolson showing better performance overall. Since a larger mesh means more finite volumes, the amount of calculations performed by the model will increase. Compared to the analytical solution, the explicit scheme still showed higher values when compared to the Crank-Nicolson and implicit schemes; however, it seems to get closer as the number of nodes increases. In terms of computation time, both the Crank-Nicolson and implicit schemes saw a slight increase, while the explicit scheme saw a major difference as the mesh got finer.
 
 \begin{figure}[ht]
     \begin{tabular}{cc}
@@ -135,11 +177,40 @@ The results obtained for the tests explained above are shown in Figure \ref{figD
 
 
 \subsubsection{Model Validation}
-In addition to the Dirichlet boundary condition established in the problem statement, Neumann and Convection boundary conditions have also been implemented in the model. Furthermore, support for variable temperatures for Dirichlet boundary conditions was implemented. To validate this implementation, a comparison will be made with the analytical solution for a steady-state scenario with the transient-state model once it reaches equilibrium. A summary of the pairs of boundary conditions used for the tests is shown in Table \ref{tabDiff1DBoundaryCases}, while comparisons with the steady state solution are shown in Figure \ref{figDiff1DAnalSol}. An additional case is included to test the proper implementation of the variable temperature Dirichlet boundary condition. As shown, all pairs evaluated accurately matched the analytical solution. Furthermore, the configuration file can now provide mathematical expressions instead of constant values when defining Dirichlet boundary conditions, as shown by the temperature profile. This capability can now easily be scaled up towards other functions in the model.
+In addition to the Dirichlet boundary condition established in the problem statement, Neumann and Convection boundary conditions have also been implemented in the model. Furthermore, support for variable temperatures for Dirichlet boundary conditions was implemented. To validate this implementation, a comparison will be made with the analytical solution for a steady-state scenario with the transient-state model once it reaches equilibrium.
+
+At steady state the time derivative vanishes and the 1D governing equation reduces to:
 
 \begin{equation}~\label{eq1DAnalytical}
-    T(x) = 1
+    \frac{d}{dx}\!\left(\lambda \frac{dT}{dx}\right) + q_V = 0
 \end{equation}
+
+For uniform $\lambda$ and $q_V = 0$, this integrates to a linear temperature profile $T(x) = A + Bx$, with constants $A$ and $B$ determined by the two boundary conditions. Table~\ref{tabDiff1DAnalytical} summarises the closed-form solutions for each of the five boundary-condition pairs tested. For Cases 2 and 4 (Robin), the temperature at the convective wall $T^*$ follows from the continuity of heat flux between the fluid and the solid at steady state.
+
+\begin{table}[ht]
+    \centering
+    \renewcommand{\arraystretch}{2.2}
+    \begin{tabular}{|c|l|l|}
+        \hline
+        Case & Boundary Conditions & Analytical Solution $T(x)$ \\
+        \hline
+        1 & Neumann (W) -- Dirichlet (E)
+          & $T_E + \dfrac{\dot{q}_W}{\lambda}(L - x)$ \\
+        2 & Robin (W) -- Dirichlet (E)
+          & $T_w^* + (T_E - T_w^*)\dfrac{x}{L}$,\quad $T_w^* = \dfrac{hL\,T_\infty + \lambda\,T_E}{hL + \lambda}$ \\
+        3 & Dirichlet (W) -- Neumann (E)
+          & $T_W + \dfrac{\dot{q}_E}{\lambda}\,x$ \\
+        4 & Dirichlet (W) -- Robin (E)
+          & $T_W + (T_e^* - T_W)\dfrac{x}{L}$,\quad $T_e^* = \dfrac{\lambda\,T_W + hL\,T_\infty}{\lambda + hL}$ \\
+        5 & Variable Dirichlet (W) -- Dirichlet (E)
+          & $T_W(t) + \bigl(T_E - T_W(t)\bigr)\dfrac{x}{L}$,\quad $T_W(t) = 100 + 50\cos\!\!\left(\dfrac{0.01\,t}{5\pi}\right)$ \\
+        \hline
+    \end{tabular}
+    \caption{Analytical steady-state solutions for each boundary-condition pair. $\dot{q}_W$ and $\dot{q}_E$ denote the prescribed heat flux entering the domain at the west and east faces respectively; $h$ is the convective heat transfer coefficient and $T_\infty$ the far-field fluid temperature.}
+    \label{tabDiff1DAnalytical}
+\end{table}
+
+A summary of the pairs of boundary conditions used for the tests is shown in Table~\ref{tabDiff1DBoundaryCases}, while comparisons with the steady-state solution are shown in Figure~\ref{figDiff1DAnalSol}. An additional case is included to test the proper implementation of the variable temperature Dirichlet boundary condition. As shown, all pairs evaluated accurately matched the analytical solution. Furthermore, the configuration file can now provide mathematical expressions instead of constant values when defining Dirichlet boundary conditions, as shown by the temperature profile in Case 5. This capability can now easily be scaled up towards other functions in the model.
 
 \begin{table}[ht]
     \centering

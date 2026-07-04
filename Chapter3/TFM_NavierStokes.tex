@@ -1,29 +1,38 @@
 \section{2D Navier-Stokes Model}~\label{chapNavierStokes}
-This chapter will describe the implementation of a numerical solver for 2D Navier-Stokes problems, using the Fractional Step Method and doing the temporal discretization using an Adams-Bashforth method. The Navier-Stokes equations describe the movement of fluids by describing multiple characteristics of the movement in a system of equations. The equations shown in Eq.~\ref{eqNSMass},~\ref{eqNSMomentum},~\ref{eqNSEnergy} describe the mass conservation, momentum conservation, and energy conservation respectively. As it can be seen, these equations follow the same structure behind transport equations shown in Chapter~\ref{chapIntroduction}, with the corresponding accumulation, convective, diffusive, and source terms. The model will be evaluated against reference values provided for the Lid-Driven Case problem \cite{}, which simplifies the model by removing the energy conservation evaluation. As such, the model will require only 3 equations, one for mass conservation, and the 2 geometric components of the momentum conservation.
+
+The Navier-Stokes equations describe the motion of viscous incompressible fluids and form the foundation of computational fluid dynamics. Unlike the scalar transport problems of Chapters~\ref{chapDiffusion} and~\ref{chapConvection}, where a single PDE governs a single unknown, the NS system is a coupled set of equations involving velocity, pressure, and — for thermally driven flows — temperature.
+
+Two fundamental challenges distinguish this problem from the preceding chapters. The first is \textbf{pressure-velocity coupling}: in incompressible flow, pressure does not have its own time-derivative equation. Instead, it acts as a Lagrange multiplier that enforces the continuity constraint $\nabla \cdot \mathbf{v} = 0$, and its value at each time step must be determined implicitly from that constraint rather than marched forward independently. The second is the \textbf{nonlinear convective term} $\rho(\mathbf{v} \cdot \nabla)\mathbf{v}$ in the momentum equation, which couples the velocity components to each other and prevents the direct application of the linear solvers developed in the previous chapters.
+
+Both challenges are addressed in combination. The \textbf{Adams-Bashforth} scheme evaluates the convective and diffusive terms explicitly using values from the current and previous time steps, so that the right-hand side of the momentum equation is fully known without inner iteration. The \textbf{Fractional Step Method}~\cite{Ferziger2002} then decouples the pressure from the velocity by splitting each time step into a predictor–Poisson–corrector sequence, reducing the coupled system to a set of independent linear problems of the type already established in the previous chapters.
+
+The governing equations for incompressible viscous flow are:
 
 \begin{equation}\label{eqNSMass}
     \nabla \cdot \mathbf{v} = 0
 \end{equation}
 
 \begin{equation}\label{eqNSMomentum}
-    \rho \frac{\partial \mathbf{v}}{\partial t} + \rho (\mathbf{v} \cdot \nabla) \mathbf{v} = \mu \nabla^2 \mathbf{v} - \nabla P
+    \rho\,\frac{\partial \mathbf{v}}{\partial t} + \rho\,(\mathbf{v} \cdot \nabla)\mathbf{v} = -\nabla P + \mu\,\nabla^2 \mathbf{v}
 \end{equation}
 
 \begin{equation}\label{eqNSEnergy}
-    \rho c_p \frac{\partial T}{\partial t} + \rho c_p \nabla (\mathbf{v} T) = \nabla (\lambda \nabla T) + \dot{q}_V
+    \rho c_p\,\frac{\partial T}{\partial t} + \rho c_p\,\nabla \cdot (\mathbf{v}\,T) = \nabla \cdot (\lambda\,\nabla T) + \dot{q}_V
 \end{equation}
 
-As mentioned above, this model uses the Adams-Bashforth discretization method, which relies on two different instants to evaluate the next iteration. Eq.~\ref{eqAdamsBashforth} shows the expression used for this discretization method, where $R(\mathbf{v})$ corresponds to the convective and diffusive terms evaluated at the corresponding time-step and is described by Eq.~\ref{eqRv}. The discretization for this expression will follow the discretization implemented in Chapter~\ref{chapConvection}.
+Equations~\eqref{eqNSMass} and~\eqref{eqNSMomentum} govern the velocity and pressure fields in all test cases. Equation~\eqref{eqNSEnergy} is the energy transport equation, which shares the same structure as the general transport equation of Chapter~\ref{chapIntroduction} with $\phi \equiv T$ and $\Gamma \equiv \lambda$; it is only activated for the Differentially Heated Cavity (Section~\ref{secDHC}), where temperature differences drive the flow through buoyancy.
 
-\begin{equation}\label{eqAdamsBashforth}
-    \rho \frac{\mathbf{v}^{n+1} - \mathbf{v}^n}{\Delta t} = - \nabla P^{n+1} + \frac{3}{2} R(\mathbf{v}^n) - \frac{1}{2} R(\mathbf{v}^{n-1})
-\end{equation}
+The time discretization of Eq.~\eqref{eqNSMomentum} uses the \textbf{Adams-Bashforth} method~\cite{Ferziger2002}, a second-order explicit multistep scheme. The key idea is to approximate the combined convective-diffusive operator $R(\mathbf{v})$ at the unknown time level $n+1$ by linear extrapolation from the two preceding known levels $n$ and $n-1$:
 
 \begin{equation}\label{eqRv}
-    R(\mathbf{v}) = \mu \nabla^2 \mathbf{v} - \rho (\mathbf{v} \cdot \nabla) \mathbf{v}
+    R(\mathbf{v}) = \mu\,\nabla^2 \mathbf{v} - \rho\,(\mathbf{v} \cdot \nabla)\mathbf{v}
 \end{equation}
 
-Since this is now a coupled solver solving for multiple variables instead of solving for a single one, the configuration file will now require the relevant details and information about every variable. As such, initial values and boundary conditions now need to be specified separately for the main solver variable and for the secondary, explicitly calculated, variables. In addition, a new Field probe was introduced specifically for the velocity field. Table~\ref{tabConfigNS} describes all the configuration parameters available for the current model.
+\begin{equation}\label{eqAdamsBashforth}
+    \rho\,\frac{\mathbf{v}^{n+1} - \mathbf{v}^n}{\Delta t} = -\nabla P^{n+1} + \frac{3}{2}\,R(\mathbf{v}^n) - \frac{1}{2}\,R(\mathbf{v}^{n-1})
+\end{equation}
+
+The coefficients $3/2$ and $-1/2$ follow from a second-order backward extrapolation of $R$ using the two known levels; this maintains temporal second-order accuracy while keeping the entire right-hand side — except for $\nabla P^{n+1}$ — explicit in known quantities. The spatial discretization of $R(\mathbf{v})$ reuses the framework of the previous chapters: the diffusive term $\mu\,\nabla^2\mathbf{v}$ is discretized as in Chapter~\ref{chapDiffusion}, and the convective term $\rho\,(\mathbf{v} \cdot \nabla)\mathbf{v}$ uses Patankar's scheme with the selected $A(|Pe|)$ function from Chapter~\ref{chapConvection}. The unknown pressure $P^{n+1}$ is handled by the Fractional Step Method described in the following subsection. The configuration parameters for this model are summarised in Table~\ref{tabConfigNS}.
 
 \begin{table}[ht]
 	\centering
@@ -32,21 +41,21 @@ Since this is now a coupled solver solving for multiple variables instead of sol
 		Group & Parameter & Description \\
 		\hline
 		\multirow{8}{*}{Numerical Data} & tempScheme & Temporal scheme selection for simulation. \\
-            & spatScheme & Convective scheme selection for simulation. \\ 
+            & spatScheme & Convective scheme selection for simulation. \\
             & solver & Solver algorithm for simulation. \\
 			& tolNumeric & Tolerance for the numerical solver. \\
 			& tolTemporal & Tolerance for the steady-state convergence. \\
-			& maxIterations & Limit of iterations per timestep. \\
+			& maxIterations & Limit of iterations per time-step. \\
 			& endTime & Last instant of the simulation. \\
 			& timeStep & Time increment after each instant. \\
 		\hline
-		\multirow{7}{*}{Physical Data} & PHI0 & Initial value for main solver variable. \\
-                                       & \multirow{2}{*}{VF0} & List with initial value for each component of velocity. \\
-					       & \multirow{2}{*}{materials} & List of vectors with thermophysical properties corresponding to each material. \\
-                           & velocityField & List of expressions for each component of the velocity field. \\
+		\multirow{5}{*}{Physical Data} & PHI0 & Initial value for pressure. \\
+                                       & \multirow{2}{*}{VF0} & List with initial value for each velocity component. \\
+				       & \multirow{2}{*}{materials} & List of vectors with thermophysical properties for each material. \\
+                           & velocityField & Expressions for each velocity component (prescribed-flow mode). \\
 		\hline
 		\multirow{5}{*}{Geometrical Data} & width & Dimension in the secondary axis. \\
-						  & \multirow{3}{*}{sections} & List of vectors indicating the distribution of materials in the simulation. Also includes amount of nodes and internal heat generation. \\
+						  & \multirow{3}{*}{sections} & List of vectors indicating material distribution, node count, and internal source. \\
 		\hline
 		\multirow{9}{*}{Mesh Data} & strength & Cubic algebraic mesh parameter. \\
 					   & centering & Cubic algebraic mesh parameter. \\
@@ -56,88 +65,124 @@ Since this is now a coupled solver solving for multiple variables instead of sol
 					   & \multirow{2}{*}{N} & List specifying total number of nodes for each axis. \\
 					   & \multirow{2}{*}{refinement} & List of vectors specifying refinement configuration for each axis. \\
 		\hline
-		\multirow{4}{*}{Boundary Data} & \multirow{2}{*}{boundaries} & List of vectors specifying the boundary conditions on each side for the main solver variable. \\
-                                       & \multirow{2}{*}{boundariesVelocity} & List of vectors specifying the boundary conditions on each side for the velocity components. \\
+		\multirow{4}{*}{Boundary Data} & \multirow{2}{*}{boundaries} & Boundary conditions for the main solver variable (pressure). \\
+                                       & \multirow{2}{*}{boundariesVelocity} & Boundary conditions for each velocity component. \\
 		\hline
 		\multirow{2}{*}{Probe Data} & \multirow{2}{*}{probes} & List of vectors specifying the probes configured for the simulation. \\
 		\hline
-        Medic Data & medicOn & Control argument for diagnostic tool. \\
+        Medic Data & medicOn & Control argument for the diagnostic tool. \\
         \hline
 	\end{tabular}
-	\caption{Configuration file structure.}
+	\caption{Configuration file structure for the Navier-Stokes model. The main additions with respect to Chapter~\ref{chapConvection} are the separate initial conditions and boundary conditions for velocity and pressure, and the new Field probe type for vector field output.}
 	\label{tabConfigNS}
 \end{table}
 
 
-\subsection{Fractional Step Method}
-This section will explain the different modifications that were implemented in the model to solve the current test case. As mentioned above, there is a requirement to solve multiple transport variables at the same time that are mutually dependent. Since the velocity and pressure need to be computed simultaneously, the Fractional Step Method separates this process into three separate steps. The first step consists of evaluating the velocity field while ignoring the pressure field. This calculated velocity field will not be an accurate solution for the next time-step; however, it can be used to evaluate the pressure field at the next time-step. After that second step, the only remaining operation is to correct the calculated velocity field with the influence of the now known pressure field. The three steps can be summarized by the expressions shown in Eqs.~\ref{eqFSM1},~\ref{eqFSM2},~\ref{eqFSM3}, showcasing the methodology used to obtain the solution to this particular case. Since the two velocity components are calculated explicitly, there is no need to employ a numerical solver for those variables. On the other hand, the pressure equation will have the same structure as a diffusion equation as it can be seen in Eq.~\ref{eqFSM2}.
+\subsection{Fractional Step Method}~\label{secFSM}
+
+The Fractional Step Method resolves the pressure-velocity coupling in Eq.~\eqref{eqAdamsBashforth} by decomposing each time step into three sequential operations. The core observation is that if the pressure gradient is temporarily omitted from the momentum update, the resulting \textit{predictor} velocity $\mathbf{v}^*$ will not in general satisfy the continuity equation; the mismatch between $\mathbf{v}^*$ and the correct $\mathbf{v}^{n+1}$ is then used to derive a scalar Poisson equation for $P^{n+1}$, whose solution closes the system.
+
+\textbf{Step 1 — Predictor.} The velocity is advanced from $\mathbf{v}^n$ to the intermediate field $\mathbf{v}^*$ using the Adams-Bashforth evaluation of $R$, with the pressure gradient omitted:
 
 \begin{equation}\label{eqFSM1}
-    \mathbf{v}^p = \mathbf{v}^n + \frac{\Delta t}{\rho} \left[ \frac{3}{2} R(\mathbf{v}^n) - \frac{1}{2} R(\mathbf{v}^{n-1}) \right]
+    \mathbf{v}^* = \mathbf{v}^n + \frac{\Delta t}{\rho}\left[\frac{3}{2}\,R(\mathbf{v}^n) - \frac{1}{2}\,R(\mathbf{v}^{n-1})\right]
 \end{equation}
+
+The field $\mathbf{v}^*$ is fully determined from known quantities and is computed explicitly without solving a linear system.
+
+\textbf{Step 2 — Pressure Poisson equation.} Subtracting Eq.~\eqref{eqFSM1} from the full update Eq.~\eqref{eqAdamsBashforth} gives the velocity correction:
+
+\begin{equation}\label{eqFSMcorr}
+    \mathbf{v}^{n+1} = \mathbf{v}^* - \frac{\Delta t}{\rho}\,\nabla P^{n+1}
+\end{equation}
+
+Taking the divergence of Eq.~\eqref{eqFSMcorr} and imposing the incompressibility constraint $\nabla \cdot \mathbf{v}^{n+1} = 0$ yields the pressure Poisson equation:
+
+\begin{equation}\label{eqPoissonP}
+    \nabla^2 P^{n+1} = \frac{\rho}{\Delta t}\,\nabla \cdot \mathbf{v}^*
+\end{equation}
+
+Equation~\eqref{eqPoissonP} is a standard diffusion-type equation with the divergence of the predictor as its source term. Integrating over $V_P$ and applying the divergence theorem — following the same procedure as in Chapter~\ref{chapDiffusion} — gives:
 
 \begin{equation}\label{eqFSM2}
-    P^{n+1}_p = \frac{1}{a_p} (a_n P^{n+1}_N + a_s P^{n+1}_S + a_e P^{n+1}_E + a_w P^{n+1}_W - \frac{\rho \Delta S}{\Delta t} (u^p_e - u^p_w + v^p_n - v^p_s))
+    a_P P_P = a_W P_W + a_E P_E + a_S P_S + a_N P_N + b_P
 \end{equation}
+
+with coefficients $a_k = S_k / d_{Pk}$ for $k \in \{w, e, s, n\}$ (equivalent to setting $\Gamma = 1$ in Table~\ref{tabDiffCoeff}), $a_P = \sum_k a_k$, and:
+
+\begin{equation}\label{eqFSM2rhs}
+    b_P = -\frac{\rho}{\Delta t}\left(u^*_e\,S_e - u^*_w\,S_w + v^*_n\,S_n - v^*_s\,S_s\right)
+\end{equation}
+
+This is a symmetric positive-definite linear system (same structure as the diffusion equation) and is solved by BiCGSTAB, consistent with Chapter~\ref{chapConvection}.
+
+\textbf{Step 3 — Velocity corrector.} With $P^{n+1}$ known from Step~2, the corrected velocity field is obtained from Eq.~\eqref{eqFSMcorr}:
 
 \begin{equation}\label{eqFSM3}
-    \mathbf{v}_p = \mathbf{v}^p_p - \frac{\Delta t}{\rho} \nabla P^{n+1} 
+    \mathbf{v}^{n+1} = \mathbf{v}^* - \frac{\Delta t}{\rho}\,\nabla P^{n+1}
 \end{equation}
 
+Since both $\mathbf{v}^*$ and $P^{n+1}$ are now known, this step is explicit and requires no further linear solve. By construction, $\mathbf{v}^{n+1}$ satisfies the continuity equation to the accuracy of the Poisson solve.
 
-\subsubsection{Staggered Meshes}
-One may recall that the discretization model discussed presented earlier in this document requires the evaluation of flow at the boundary of each control volume. As such, rather than computing the pressure and velocity components using a standard mesh, it is beneficial to stagger independent meshes for each one of our variables. By doing this, the computed nodes for each variable are already located at the necessary positions for their interactions, eliminating the need for interpolation during the calculation process. Figure~\ref{figStaggeredMesh} show the distribution of nodes on top of the main variable mesh grid. 
+
+\subsubsection{Staggered Meshes}~\label{secStaggered}
+
+Discretizing pressure and velocity on the same collocated grid leads to a well-known pathology. The central-difference approximation of the pressure gradient at cell $P$ in the $x$-direction is:
+
+\begin{equation}\label{eqPgradCollocated}
+    \left.\frac{\partial P}{\partial x}\right|_P \approx \frac{P_E - P_W}{2\Delta x}
+\end{equation}
+
+This formula samples pressure nodes two cells apart and ignores the immediate neighbours. As a consequence, a \textit{checkerboard} pressure field — one that alternates sign between adjacent cells — produces a zero gradient at every node. The momentum equation cannot distinguish this spurious oscillatory pattern from a physically uniform pressure field, and the solver cannot suppress it.
+
+The staggered mesh arrangement~\cite{Ferziger2002} eliminates this decoupling by relocating the velocity components to the cell faces. Pressure nodes remain at cell centres; horizontal velocity $u$ nodes are placed at the east/west face midpoints; and vertical velocity $v$ nodes are placed at the north/south face midpoints, as shown in Fig.~\ref{figStaggeredMesh}. With this layout, the pressure gradient driving the $u$-node at the east face of cell $P$ is:
+
+\begin{equation}\label{eqPgradStaggered}
+    \left.\frac{\partial P}{\partial x}\right|_e \approx \frac{P_E - P_P}{\Delta x}
+\end{equation}
+
+which links adjacent pressure nodes directly. Similarly, the discrete divergence at cell $P$:
+
+\begin{equation}\label{eqDivStaggered}
+    \nabla \cdot \mathbf{v}\big|_P \approx \frac{u_e - u_w}{\Delta x} + \frac{v_n - v_s}{\Delta y}
+\end{equation}
+
+is computed from face velocities that are the immediate neighbours of the cell centroid. Both odd-even decouplings are eliminated without any interpolation between mesh levels.
 
 \begin{figure}[ht]
     \centering
     \includegraphics[width=0.45\linewidth]{Chapter3/Media/StaggeredMesh.png}
-    \caption{Staggered Mesh representation. Blue nodes correspond to pressure , red nodes to the first velocity component ($u = \mathbf{v}_x$), and green nodes to the second velocity component ($v = \mathbf{v}_y$).}
+    \caption{Staggered mesh layout. Pressure nodes (blue) are located at cell centres; $u$-velocity nodes (red) at east/west face midpoints; $v$-velocity nodes (green) at north/south face midpoints.}
     \label{figStaggeredMesh}
 \end{figure}
 
 
-\subsection{Model Validation}
-As mentioned above, the model will be validated by comparing the results to given reference values for the Lid-Driven Case problem with $Re = 100, 400$ using both CDS and UDS. $Re$ is defined by Eq.~\ref{eqReynolds} No numerical study will be included in this section as the velocity components are calculated explicitly and the pressure equation is solved using the same model described in previous chapters. The reference values given are distributed across the mid-sections of each axis of the domain ($x = 0.5, y = 0.5$), and will be plotted against the model solution for CDS and UDS. 
+\subsection{Boundary Conditions}~\label{secNSBC}
 
-\begin{equation}\label{eqReynolds}
-    Re = \frac{\rho U L}{\mu}
+Boundary conditions for the Navier-Stokes model must be specified separately for the velocity and for the pressure, since the two fields are governed by different equations within the FSM algorithm.
+
+\textbf{Velocity boundary conditions.} All solid walls impose the \textbf{no-slip} condition, which sets both velocity components to zero at the wall:
+
+\begin{equation}\label{eqNSBCNoSlip}
+    u = 0, \qquad v = 0 \qquad \text{(solid wall)}
 \end{equation}
 
-Fig.~\ref{figNSVelComp} shows the comparison of the model results to the given reference values, demonstrating that the present model was able to replicate the expected behaviour. In addition, the results show a clear difference between the diffusion-dominant $Re = 100$ case, and the convection-dominant $Re = 400$ case. The diffusion-dominant case will have a smoother distribution as the effect of velocity gradients is not too impactful yet. Furthermore, since the effect of the velocity gradient is still small, the results for UDS and CDS will be practically the same. On the other hand, the profiles for the convection-dominant case show clearly defined inflection points and a noticeable separation between the results for UDS and CDS. When the simulation becomes convection-dominant, the effect of the velocity gradients will be more important, and the difference between the advective schemes will be more clear. Figures~\ref{figNSVelMag},~\ref{figNSVelVec} show the results obtained for the velocity field in steady-state for the simulations, both as a colormap of the magnitude, and as a vector map showing the flow direction.
+For the Lid-Driven Cavity, the moving top wall prescribes a non-zero tangential velocity while maintaining zero normal velocity:
 
-\begin{figure}[ht]
-	\centering
-	\begin{tabular}{cc}
-        \includegraphics[width=0.45\linewidth]{Chapter3/Media/NS100u.png} & \includegraphics[width=0.45\linewidth]{Chapter3/Media/NS100v.png} \\
-        \includegraphics[width=0.45\linewidth]{Chapter3/Media/NS400u.png} & \includegraphics[width=0.45\linewidth]{Chapter3/Media/NS400v.png} \\
-	\end{tabular}
-	\caption{Comparison of model results with results provided in problem statement.}
-	\label{figNSVelComp}
-\end{figure}
+\begin{equation}\label{eqNSBCLid}
+    u = U, \qquad v = 0 \qquad \text{(moving lid)}
+\end{equation}
 
+Both conditions are Dirichlet constraints and are imposed through the same coefficient modification used in Chapter~\ref{chapConvection}: the known wall velocity enters $a_P$ and $b_P$ of the corresponding momentum equation cell. On the staggered mesh, the velocity node lies exactly at the face midpoint, so no ghost-node distance correction is required for the wall-tangent component; the normal-to-wall component is zero by the no-penetration condition and is enforced directly.
 
-\begin{figure}[ht]
-	\centering
-	\begin{tabular}{cc}
-        \includegraphics[width=0.45\linewidth]{Chapter3/Media/NS100UDS.png} & \includegraphics[width=0.45\linewidth]{Chapter3/Media/NS400UDS.png} \\
-        \scriptsize{\textit{Case 1}} & \scriptsize{\textit{Case 2}} \\
-        \includegraphics[width=0.45\linewidth]{Chapter3/Media/NS100CDS.png} & \includegraphics[width=0.45\linewidth]{Chapter3/Media/NS400CDS.png} \\
-        \scriptsize{\textit{Case 3}} & \scriptsize{\textit{Case 4}} \\
-	\end{tabular}
-	\caption{NS velocity profile for all test cases.}
-	\label{figNSVelMag}
-\end{figure}
+\textbf{Pressure boundary conditions.} The pressure Poisson equation (Eq.~\eqref{eqPoissonP}) has no prescribed Dirichlet value at any wall: every physical boundary is solid, so $\mathbf{v}^{n+1} \cdot \hat{n} = 0$ on all wall faces. Differentiating Eq.~\eqref{eqFSMcorr} in the wall-normal direction and applying the no-penetration condition yields the natural boundary condition for pressure:
 
+\begin{equation}\label{eqNSBCPressure}
+    \frac{\partial P^{n+1}}{\partial n} = 0 \qquad \text{(all walls)}
+\end{equation}
 
-\begin{figure}[ht]
-	\centering
-	\begin{tabular}{cc}
-        \includegraphics[width=0.45\linewidth]{Chapter3/Media/NS100UDSVec.png} & \includegraphics[width=0.45\linewidth]{Chapter3/Media/NS400UDSVec.png} \\
-        \scriptsize{\textit{Case 1}} & \scriptsize{\textit{Case 2}} \\
-        \includegraphics[width=0.45\linewidth]{Chapter3/Media/NS100CDSVec.png} & \includegraphics[width=0.45\linewidth]{Chapter3/Media/NS400CDSVec.png} \\
-        \scriptsize{\textit{Case 3}} & \scriptsize{\textit{Case 4}} \\
-	\end{tabular}
-	\caption{NS velocity vector map for all test cases.}
-	\label{figNSVelVec}
-\end{figure}
+A purely Neumann Poisson problem has a one-dimensional null space: $P^{n+1}$ is determined only up to an additive constant. To obtain a unique solution, the pressure is fixed to zero at a single reference node (a domain corner), which does not affect the velocity field since only $\nabla P$ enters the corrector step.
 
+% Sections
+\input{Chapter3/TFM_LidDrivenCavity}
+\input{Chapter3/TFM_DiferentiallyHeatedCavity}
