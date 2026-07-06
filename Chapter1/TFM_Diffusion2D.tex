@@ -3,7 +3,7 @@ In this section, the implementation of a heat conduction model for the \textbf{4
 
 \begin{figure}[ht]
     \centering
-    \includegraphics[width=0.45\linewidth]{Chapter1/Media/PLACEHOLDER.png}
+    \includegraphics[width=0.65\linewidth]{Chapter1/Media/Schematic4Materials.png}
     \caption{Diagram for 4 Materials Case.}
     \label{fig4Materials}
 \end{figure}
@@ -62,7 +62,7 @@ The model developed for the 2D case will follow the same discretization proposed
 \end{table}
 
 \subsubsection{Numerical Parameter Study}
-For this test, timestep $\Delta t$ and number of nodes $N$ are modified to analyze their impact on the number of iterations and total residue. Both parameters will be independently swept across their respective range of values while keeping the other parameter at a constant value. A summary of the values for each of these parameters is shown in Table \ref{tabDiffNumerical2D}, highlighting the values used for the base case. In addition, the explicit scheme still requires an imposed limit for the value of $\Delta t$; however the expression for the 2D case changes as described by Eq. \ref{eqDiffExplicit2D} due to the presence of simultaneous diffusion in both axis. Contrary to the results shown for the 1D case, there will be no comparison of error with the analytical solution or computation time. This numerical parameter study will focus on comparing the number of iterations and total residue.
+Two studies are carried out to assess the impact of mesh resolution and temporal scheme on solver performance for the 4 Materials Case. The first sweeps $N$ at fixed $\Delta t = 50\,\text{s}$ to quantify how CG iteration count and residual scale with mesh size (Panel A of Fig.~\ref{figDiffParam2D}). The second compares the three temporal schemes (implicit, Crank-Nicolson, and explicit) at fixed $N = 64$ (Panel B). The explicit scheme requires the time step to satisfy the 2D stability limit of Eq.~\eqref{eqDiffExplicit2D}, which is much stricter than the $\Delta t = 50\,\text{s}$ used by the other schemes. The mesh sizes tested are summarised in Table~\ref{tabDiffNumerical2D}.
 
 \begin{table}[ht]
 	\centering
@@ -70,11 +70,10 @@ For this test, timestep $\Delta t$ and number of nodes $N$ are modified to analy
 		\hline
 		Parameter & Values \\
 		\hline
-		$\Delta t$ & 0.1, 0.5, \textbf{1.0}, 2.0, 5.0 \\
-		$N$ & 50, \textbf{100}, 200, 400 \\
+		$N$ & 16, 32, \textbf{64}, 128 \\
 		\hline
 	\end{tabular}
-	\caption{Value ranges for numerical parameter study.}
+	\caption{Mesh sizes tested in the 4 Materials spatial refinement study (implicit, $\Delta t = 50\,\text{s}$). Bold indicates the resolution used for the benchmark and scheme comparison.}
 	\label{tabDiffNumerical2D}
 \end{table}
 
@@ -83,40 +82,28 @@ For this test, timestep $\Delta t$ and number of nodes $N$ are modified to analy
 \Delta t_{max} = \frac{\Delta x^2 \Delta y^2}{2 \alpha (\Delta x^2 + \Delta y^2)}
 \end{equation}
 
-\paragraph{$\Delta t$ Study}
-The results obtained from the tests explained above are shown in Figure \ref{figDiffResults2DA}. As shown, the number of iterations and total residue follow a similar trend to the one seen in the 1D case, increasing with $\Delta t$ for the implicit and Crank-Nicolson schemes, showing a better performance for the Crank-Nicolson scheme on both metrics.  On the other hand, the explicit scheme did not present any changes during the timestep study. This is due to the timestep being limited by the expression discussed above; which activated for all analyzed cases.
+\paragraph{$N$ Study (Panel A)}
+Panel A of Fig.~\ref{figDiffParam2D} shows CG iteration count and convergence residual as a function of $N$ at fixed $\Delta t = 50\,\text{s}$ (implicit). As the mesh is refined from $N = 16$ to $N = 128$, the iteration count grows roughly as $O(\sqrt{N})$, consistent with the spectral properties of CG on 1D-structured systems. The residual increases slightly with $N$ as the larger linear system contains more unknowns per solve.
 
-\begin{figure}[ht]
-	\begin{tabular}{cc}
-		\includegraphics[width=0.45\linewidth]{Chapter1/Media/tSweep2DIterations.png} & \includegraphics[width=0.45\linewidth]{Chapter1/Media/tSweep2DResidue.png} \\
-	\end{tabular}
-	\caption{$\Delta t$ sweep results.}
-	\label{figDiffResults2DA}
-\end{figure}
-
-\paragraph{$N$ Study}
-The results obtained from the tests explained above are shown in Figure \ref{figDiffResults2DB}. Just like in the previous test, the presented plots show a similar trend to the one seen in the previous scenario, showing an increase in number of iterations and residue for most cases. Furthermore, the implicit scheme showed higher sensitivity to increases in $N$ compared to the Crank-Nicolson and explicit schemes; with the explicit scheme showing no change at all. On the other hand, while residue was significantly higher for implicit on coarser meshes, the difference between the implicit and Crank-Nicolson schemes became smaller as $N$ increased; with the explicit scheme showing a slight increase in the beginning but less of an impact as $N$ kept increasing.
+\paragraph{Scheme Comparison (Panel B)}
+Panel B compares implicit, Crank-Nicolson, and explicit schemes at $N = 64$ over the full simulation time of $15000\,\text{s}$. Implicit and CN both use $\Delta t = 50\,\text{s}$ and complete the simulation in approximately 300 time steps; the explicit scheme is stability-limited to $\Delta t \approx \Delta x^2/(2\alpha_{\min})$, requiring roughly $375\,000$ steps to reach $t = 15000\,\text{s}$. Despite the drastically different step counts, all three schemes converge to the same steady state. For a stiff diffusion problem with time constant $\tau \approx 1685\,\text{s}$, the implicit and CN schemes are dramatically more efficient per unit of simulated time.
 
 \begin{figure}[ht]
     \centering
-	\begin{tabular}{cc}
-		\includegraphics[width=0.45\linewidth]{Chapter1/Media/NSweep2DIterations.png} & \includegraphics[width=0.45\linewidth]{Chapter1/Media/NSweep2DResidue.png} \\
-	\end{tabular}
-	\caption{$N$ sweep results.}
-	\label{figDiffResults2DB}
+    \includegraphics[width=\linewidth]{Chapter1/Media/Diff_mat4_param_study.png}
+    \caption{Numerical parameter study for the 4 Materials Case. Panel A (left): average CG iterations per time step and average residual as a function of mesh size $N$ (implicit, $\Delta t = 50\,\text{s}$). Panel B (right): iteration count and residual vs.\ time for the three temporal schemes at $N = 64$; the explicit scheme requires $\sim 10^3\times$ more time steps than implicit/CN to reach the same simulated time.}
+    \label{figDiffParam2D}
 \end{figure}
 
 \subsubsection{Model Validation}
-As a preliminary step, the three boundary condition types (Dirichlet, Neumann, and Robin) were independently verified in 2D by applying an adiabatic Neumann condition ($\partial T / \partial n = 0$) on the faces of the secondary axis, effectively reducing the problem to a 1D configuration along the primary axis. The results successfully replicated the steady-state profiles validated in Section~\ref{secDiffusion1D} for each axis, confirming that the boundary condition implementation is correct in two dimensions.
+As a preliminary step, the three boundary condition types (Dirichlet, Neumann, and Robin) were independently verified in 2D by applying an adiabatic Neumann condition ($\partial T / \partial n = 0$) on the boundaries of one axis, effectively reducing the problem to a 1D configuration along the other axis. The results successfully replicated the steady-state profiles validated in Section~\ref{secDiffusion1D} for each axis, confirming that the boundary condition implementation is correct in two dimensions.
 
-The primary benchmark for this chapter is the \textbf{4 Materials Case}~\cite{}, whose results are shown in Fig.~\ref{figDiff2D4Materials}. Since this is a transient simulation, no closed-form analytical solution exists; validation is instead performed against reference temperatures at two probe locations, $[0.65, 0.56]$ and $[0.74, 0.72]$, at prescribed time instants. The model successfully matched both reference values and produced a temperature distribution consistent with the expected evolution of the domain.
+The primary benchmark for this chapter is the \textbf{4 Materials Case}~\cite{CTTC2022Part3}, whose results are shown in Fig.~\ref{figDiff2D4MaterialsProbe}. Since this is a transient simulation, validation is performed by comparing the numerical temperature profile at $t = 15000\,\text{s}$ against the analytical piecewise-linear steady-state solution $T_{\mathrm{ss}}(x)$, which can be derived from the one-dimensional heat-flux continuity condition across the four material interfaces. The overall $L_2$ error is $5.70 \times 10^{-5}$, and the interface temperatures agree to within $0.13\,\text{K}$ of the analytical values ($T(0.25) = 76.55$ vs.\ $76.63\,^{\circ}\text{C}$; $T(0.50) = 48.38$ vs.\ $48.25\,^{\circ}\text{C}$; $T(0.75) = 28.25$ vs.\ $28.38\,^{\circ}\text{C}$).
 
 \begin{figure}[ht]
-	\centering
-	\begin{tabular}{cc}
-		\includegraphics[width=0.45\linewidth]{Chapter1/Media/4MaterialsPoint.png} & \includegraphics[width=0.45\linewidth]{Chapter1/Media/4MaterialsMap.png} \\
-	\end{tabular}
-	\caption{Comparison of probe temperatures against reference values (left) and steady-state temperature distribution (right) for the 4 Materials Case.}
-	\label{figDiff2D4Materials}
+    \centering
+    \includegraphics[width=0.6\linewidth]{Chapter1/Media/Diff_mat4_benchmark.png}
+    \caption{Steady-state temperature profile at $t = 15000\,\text{s}$ (CN, $N = 64$, $\Delta t = 10\,\text{s}$) compared against the analytical piecewise-linear solution $T_{\mathrm{ss}}(x)$ of the 4 Materials Case~\cite{CTTC2022Part3}. Vertical dashed lines indicate material interfaces; slope changes at the interfaces reflect the different thermal conductivities.}
+    \label{figDiff2D4MaterialsProbe}
 \end{figure}
 

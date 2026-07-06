@@ -4,25 +4,50 @@
 
 %%% DEDICATION
 \begin{flushright}
-    Dedication goes here.
+    This document is dedicated to those I had to leave back home to pursue my ambitions; and specially to those I will never get to see again for they are now gone. Your values and ideals will endure time through all the people whose lives you changed during your time. I miss you dearly. 
 \end{flushright}
 
 \vspace{1cm}
 
 \begin{spacing}{1.5}
-    Additional content can be written here.
+    Ini kakiri inauchima umanumuki. Ranautsun upiwata kakiriutsa tanamuki. Tsariwari tamanapan ichari ranatsën.
 \end{spacing}
 
 %%% ACKNOWLEDGEMENTS
 \section*{Acknowledgements}
 \markboth{\it{Acknowledgements}\/}{\it{Acknowledgements}\/}
-Acknowledgements go here.
+
+I would like to express my sincere gratitude to my director, Jes\'{u}s Castro Gonz\'{a}lez, and
+co-director, Josep Plana Riu, for their guidance, patience, and invaluable feedback
+throughout this project. Their expertise in computational fluid dynamics and their
+willingness to discuss ideas at every stage have been essential to the development of this
+work.
+
+I am also grateful to my colleagues at the Centre Tecnol\`{o}gic de la Transfer\`{e}ncia de Calor
+(CTTC) who, at different points during the project, generously dedicated their time to
+answering questions and sharing their knowledge. Their collective support made this a
+richer learning experience.
+
+More broadly, I would like to thank the Universitat Polit\`{e}cnica de Catalunya (UPC) and the
+Escola T\`{e}cnica Superior d'Enginyeria Industrial de Barcelona (ETSEIB) for the academic
+formation that laid the foundations of this work.
+
+Finally, I would like to thank my family for their unconditional support and encouragement
+throughout my studies. This work would not have been possible without them.
 
 %%% TABLE OF CONTENTS
 \tableofcontents
 \listoffigures
 \listoftables
 
-%%% ABSTRACT
+%%% RESUM (CATALAN)
+\section*{Resum}
+L'objectiu d'aquest projecte és resoldre numèricament les equacions del moviment de fluids amb transferència de calor, és a dir, les equacions de Navier-Stokes acoblades amb l'equació de conservació de l'energia, de manera multidimensional (mètodes CFD i TH). La metodologia es basa en tècniques de volum finit, fent servir el mètode de pas fraccionari per resoldre l'acoblament entre els camps de pressió i velocitat, és a dir, les equacions de conservació de massa i moment. En una etapa posterior, s'incorpora l'equació de conservació de l'energia, permetent l'estudi de problemes de transferència de calor per convecció. L'anàlisi comença amb l'estudi de problemes de transferència de calor per conducció (problema dels 4 materials). En una segona etapa, s'incorpora un camp de velocitat prescrit per estudiar el problema de difusió numèrica en la solució de l'equació de convecció-difusió (problema de Smith-Hutton). En la tercera etapa, es desenvolupa un resoledor del moviment de fluids per a fluxos laminars, és a dir, les equacions de conservació de massa i moment; finalment, s'afegeix l'equació de conservació de l'energia al resoledor de fluids. Els codis computacionals es verifiquen mitjançant estudis de refinament de malla en espai i temps, fent servir casos de referència corresponents a cada etapa. La investigació dels problemes seleccionats inclou estudis paramètrics que consideren variacions en geometria, propietats termofísiques i condicions de contorn.
+
+%%% RESUMEN (SPANISH)
+\section*{Resumen}
+El objetivo de este proyecto es resolver numéricamente las ecuaciones del movimiento de fluidos con transferencia de calor, es decir, las ecuaciones de Navier-Stokes acopladas con la ecuación de conservación de la energía, de manera multidimensional (métodos CFD y TT). La metodología se basa en técnicas de volumen finito, utilizando el método de paso fraccionario para resolver el acoplamiento entre los campos de presión y velocidad, es decir, las ecuaciones de conservación de masa y cantidad de movimiento. En una etapa posterior, se incorpora la ecuación de conservación de la energía, permitiendo el estudio de problemas de transferencia de calor por convección. El análisis comienza con estudios de problemas de transferencia de calor por conducción (problema de los 4 materiales). En una segunda etapa, se incorpora un campo de velocidad prescrito para estudiar el problema de difusión numérica en la solución de la ecuación de convección-difusión (problema de Smith-Hutton). En la tercera etapa, se desarrolla un resolvedor del movimiento de fluidos para flujos laminares, es decir, las ecuaciones de conservación de masa y cantidad de movimiento; finalmente, la ecuación de conservación de la energía se añade al resolvedor de fluidos. Los códigos computacionales se verifican mediante estudios de refinamiento de malla en espacio y tiempo, utilizando casos de referencia correspondientes a cada etapa. La investigación de los problemas seleccionados incluye estudios paramétricos que consideran variaciones en geometría, propiedades termofísicas y condiciones de contorno.
+
+%%% ABSTRACT (ENGLISH)
 \section*{Abstract}
-The objective of this project is to numerically solve the equations of fluid motion with heat transfer, i.e., the Navier-Stokes equations coupled with the energy conservation equation, in a multidimensional manner (CFD \& HT methods). The method- ology will be based on finite-volume techniques, using the fractional-step method to solve the coupling between the pressure and velocity fields, i.e., the conservation of mass and momentum equations. In a further step, the energy conservation equation will be incorporated, enabling the study of convection heat transfer problems. The analysis will begin with studies of conduction heat transfer problems (i.e., 4-materials problem). In a second step, a given velocity field will be incorporated to study the numerical diffusion problem in the solution of the convection-diffusion equation (i.e., Smith-Hutton problem). In the third step, a fluid motion solver for laminar flows will be developed, i.e., the mass and momentum conservation equations; finally, the energy conservation equation will be added to the fluid solver. The computational codes will be verified through grid-refinement studies in both space and time, using corresponding benchmark cases at each step. The investigation of the selected problems will include parametric studies considering variations in geometry, thermophysical properties, and boundary conditions.
+The objective of this project is to numerically solve the equations of fluid motion with heat transfer, i.e., the Navier-Stokes equations coupled with the energy conservation equation, in a multidimensional manner (CFD \& HT methods). The methodology is based on finite-volume techniques, using the fractional-step method to solve the coupling between the pressure and velocity fields, i.e., the conservation of mass and momentum equations. In a further step, the energy conservation equation is incorporated, enabling the study of convection heat transfer problems. The analysis begins with studies of conduction heat transfer problems (i.e., 4-materials problem). In a second step, a given velocity field is incorporated to study the numerical diffusion problem in the solution of the convection-diffusion equation (i.e., Smith-Hutton problem). In the third step, a fluid motion solver for laminar flows is developed, i.e., the mass and momentum conservation equations; finally, the energy conservation equation is added to the fluid solver. The computational codes are verified through grid-refinement studies in both space and time, using corresponding benchmark cases at each step. The investigation of the selected problems includes parametric studies considering variations in geometry, thermophysical properties, and boundary conditions.

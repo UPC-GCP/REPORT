@@ -1,6 +1,12 @@
 \subsection{Lid-Driven Cavity}~\label{secLDC}
+The Lid-Driven Cavity is a classical benchmark for incompressible viscous flow solvers~\cite{Ghia1982, CTTC2022Part5}. The problem consists of a square domain $\Omega = [0, L] \times [0, L]$ with $L = 1$ (dimensionless) in which the top wall moves at constant velocity $U = 1$ in the $x$-direction while all other walls are stationary. No thermal effects are present; the flow is driven entirely by the shear stress imparted by the moving lid, which sets up a large primary recirculation vortex that fills the cavity. A schematic of the problem is shown in Fig.~\ref{figLDCSchematic}.
 
-The Lid-Driven Cavity is a canonical benchmark for incompressible viscous flow solvers~\cite{Ghia1982}. The problem consists of a square domain $\Omega = [0, L] \times [0, L]$ with $L = 1$ (dimensionless) in which the top wall moves at constant velocity $U = 1$ in the $x$-direction while all other walls are stationary. No thermal effects are present; the flow is driven entirely by the shear stress imparted by the moving lid, which sets up a large primary recirculation vortex that fills the cavity.
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.45\linewidth]{Chapter3/Media/SchematicLDC.png}
+    \caption{Lid-Driven Cavity schematic. The top wall moves at velocity $U$ while the remaining three walls are stationary.}
+    \label{figLDCSchematic}
+\end{figure}
 
 The flow regime is characterised by the Reynolds number:
 
@@ -12,24 +18,14 @@ As $Re$ increases, inertial effects shift the primary vortex centre downstream a
 
 
 \subsubsection{Model Implementation}
-
-The Lid-Driven Cavity uses the full NS solver described above with the energy equation (Eq.~\eqref{eqNSEnergy}) deactivated, since the problem is isothermal. The domain is a single uniform material with $\rho = 1$ and viscosity $\mu = 1/Re$, so that $L = U = 1$ satisfies Eq.~\eqref{eqReynolds} by construction.
-
-Boundary conditions follow Section~\ref{secNSBC}: no-slip on the west, east, and south walls; moving lid ($u = 1,\ v = 0$) on the north wall. Initial conditions are $\mathbf{v}^0 = \mathbf{0}$ and $P^0 = 0$ throughout the domain. The simulation advances in time until a steady-state criterion is met, defined as the relative change in the $L_2$ norm of the velocity field falling below the specified temporal tolerance $\varepsilon_\text{temporal}$:
-
-\begin{equation}\label{eqLDCSteadyState}
-    \frac{\|\mathbf{v}^{n+1} - \mathbf{v}^n\|_2}{\|\mathbf{v}^n\|_2} < \varepsilon_\text{temporal}
-\end{equation}
-
-The velocity field output at steady state is extracted via Field probes, which record the full 2D distribution of $u$ and $v$ at each saved time step.
+The Lid-Driven Cavity uses the full NS solver described above with the energy equation (Eq.~\eqref{eqNSEnergy}) deactivated, since the problem is isothermal. The domain is a single uniform material with $\rho = 1$ and viscosity $\mu = 1/Re$, so that $L = U = 1$ satisfies Eq.~\eqref{eqReynolds} by construction. Boundary conditions follow Section~\ref{secNSBC}: no-slip on the west, east, and south walls; moving lid ($u = 1,\ v = 0$) on the north wall. Initial conditions are $\mathbf{v}^0 = \mathbf{0}$ and $P^0 = 0$ throughout the domain. An additional probe type "Field" was added for the model, which record the full 2D distribution of $u$ and $v$ at each saved time step.
 
 
 \subsubsection{Numerical Parameter Study}
-
 Two independent parameter studies are carried out before the validation runs. The first establishes the minimum uniform mesh resolution that captures the primary vortex structure. The second assesses whether a non-uniform mesh, clustered toward the walls using the hyperbolic tangent distribution controlled by the $\delta$ parameter, provides accuracy gains over a uniform mesh at the same node count.
 
 \paragraph{Mesh Refinement}
-Four uniform meshes are swept using the CDS scheme at $Re = 1000$. The minimum $u$-velocity along the vertical centreline $x = 0.5$, denoted $u_{\min}$, is tracked as a scalar convergence metric and compared against the Ghia reference value. The tested values are summarised in Table~\ref{tabLDCNumerical}.
+Four uniform meshes are swept for both the CDS and Hybrid schemes at $Re = 1000$. The minimum $u$-velocity along the vertical centreline $x = 0.5$, denoted $u_{\min}$, is tracked as a scalar convergence metric and compared against the Ghia reference~\cite{Ghia1982}. The tested mesh sizes are summarised in Table~\ref{tabLDCNumerical}, and the computed $u_{\min}$ values for both schemes are listed in Table~\ref{tabLDCRefine}.
 
 \begin{table}[ht]
     \centering
@@ -40,61 +36,119 @@ Four uniform meshes are swept using the CDS scheme at $Re = 1000$. The minimum $
         $N$ & 16,\ 32,\ \textbf{64},\ 128 \\
         \hline
     \end{tabular}
-    \caption{Mesh sizes tested in the spatial refinement study for the Lid-Driven Cavity ($Re = 1000$, CDS). Bold value indicates the resolution selected for subsequent studies.}
+    \caption{Mesh sizes tested in the spatial refinement study for the Lid-Driven Cavity ($Re = 1000$). Bold value indicates the resolution selected for subsequent studies.}
     \label{tabLDCNumerical}
 \end{table}
 
-The convergence of $u_{\min}$ with $N$ and the corresponding evolution of the centreline profiles are shown in Fig.~\ref{figLDCRefinement}.
+\begin{table}[ht]
+    \centering
+    \begin{tabular}{|c|c|c|c|c|}
+        \hline
+        \multirow{2}{*}{$N$} & \multicolumn{2}{c|}{CDS} & \multicolumn{2}{c|}{Hybrid} \\
+        \cline{2-5}
+        & $u_{\min}$ & Error & $u_{\min}$ & Error \\
+        \hline
+        16  & $-0.349$ & --       & $-0.158$ & -- \\
+        32  & $-0.337$ & --       & $-0.246$ & -- \\
+        64  & $-0.361$ & $5.70\%$ & $-0.309$ & $19.24\%$ \\
+        128 & $-0.367$ & $4.13\%$ & $-0.354$ & $7.55\%$ \\
+        \hline
+        Extrap.\ ($\infty$) & $-0.369$ & $3.60\%$ & $-0.461$ & -- \\
+        \hline
+        Ghia & \multicolumn{4}{c|}{$-0.38289$} \\
+        \hline
+    \end{tabular}
+    \caption{Minimum $u$-velocity $u_{\min}$ at $x = 0.5$ for CDS and Hybrid schemes at four mesh levels ($Re = 1000$). Error is computed against the Ghia reference. Richardson extrapolation gives apparent orders $p = 2.00$ (CDS) and $p = 0.50$ (Hybrid).}
+    \label{tabLDCRefine}
+\end{table}
+
+The CDS results, shown in Fig.~\ref{figLDCRefinement}, exhibit second-order convergence ($p = 2.00$), consistent with the formal accuracy of the scheme. The grid convergence index (GCI) at $N = 128$ is $0.68\%$, confirming that the finest-mesh solution is well-resolved. The extrapolated limit $u_{\min}^\infty = -0.369$ lies $3.60\%$ below the Ghia reference of $-0.38289$. This residual offset is structural: Ghia et al.\ used a stream-function/vorticity formulation that eliminates pressure entirely, whereas the FSM pressure-correction step introduces a small systematic perturbation to the velocity field that does not vanish with mesh refinement.
 
 \begin{figure}[ht]
     \centering
-    \includegraphics[width=0.45\linewidth]{Chapter3/Media/LDCRefineConvergence.png}
-    \includegraphics[width=\linewidth]{Chapter3/Media/LDCRefineProfiles.png}
+    \includegraphics[width=0.5\linewidth]{Chapter3/Media/LDC_CDS_refine_convergence.png}
+    \includegraphics[width=\linewidth]{Chapter3/Media/LDC_CDS_refine_profiles.png}
     \caption{Mesh refinement study for the Lid-Driven Cavity ($Re = 1000$, CDS). Top: minimum $u$-velocity $u_{\min}$ at $x = 0.5$ as a function of $N$, compared against the Ghia reference. Bottom: centreline $u$ (left) and $v$ (right) profiles at each mesh level.}
     \label{figLDCRefinement}
 \end{figure}
 
-\paragraph{Non-uniform Mesh Study}
-With the uniform resolution established, the effect of wall clustering is assessed. The hyperbolic tangent mesh distribution concentrates nodes near the walls with a stretching controlled by the $\delta$ parameter: larger $\delta$ produces stronger clustering. Four values of $\delta$ are tested at $N = 64$ and $Re = 1000$; the sensitivity of $u_{\min}$ and the corresponding centreline profiles are shown in Fig.~\ref{figLDCDelta}.
+The Hybrid scheme converges considerably more slowly: Richardson extrapolation yields $p \approx 0.50$ and a GCI of $37.79\%$ at $N = 128$, indicating that the finest Hybrid solution is far from grid-independent. The slow convergence reflects the UDS blending that activates wherever $Pe_k > 2$: in the high-velocity lid region and near the primary vortex, first-order numerical diffusion smears the velocity gradients and systematically underestimates $|u_{\min}|$. The corresponding profiles are shown in Fig.~\ref{figLDCRefinementHybrid}.
 
 \begin{figure}[ht]
     \centering
-    \includegraphics[width=0.45\linewidth]{Chapter3/Media/LDCDeltaSensitivity.png}
-    \includegraphics[width=\linewidth]{Chapter3/Media/LDCDeltaProfiles.png}
+    \includegraphics[width=0.5\linewidth]{Chapter3/Media/LDC_refine_convergence.png}
+    \includegraphics[width=\linewidth]{Chapter3/Media/LDC_refine_profiles.png}
+    \caption{Mesh refinement study for the Lid-Driven Cavity ($Re = 1000$, Hybrid). Top: minimum $u$-velocity $u_{\min}$ at $x = 0.5$ as a function of $N$, compared against the Ghia reference. Bottom: centreline $u$ (left) and $v$ (right) profiles at each mesh level.}
+    \label{figLDCRefinementHybrid}
+\end{figure}
+
+\paragraph{Non-uniform Mesh Study}
+With the uniform resolution established, the effect of near-wall clustering is assessed. The hyperbolic tangent distribution concentrates nodes towards all four walls with a stretching controlled by the $\delta$ parameter: larger $\delta$ produces stronger clustering and a tighter minimum cell width at the walls. Three values of $\delta$ are tested at $N = 64$, $Re = 1000$, and the CDS scheme; the sensitivity of $u_{\min}$ and the corresponding centreline profiles are shown in Fig.~\ref{figLDCDelta}.
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.5\linewidth]{Chapter3/Media/LDC_delta_sensitivity.png}
+    \includegraphics[width=\linewidth]{Chapter3/Media/LDC_delta_profiles.png}
     \caption{Non-uniform mesh sensitivity for the Lid-Driven Cavity ($Re = 1000$, $N = 64$, CDS). Top: minimum $u$-velocity $u_{\min}$ as a function of the clustering parameter $\delta$, compared against the Ghia reference. Bottom: centreline $u$ (left) and $v$ (right) profiles for each $\delta$ value.}
     \label{figLDCDelta}
 \end{figure}
 
+Stronger wall clustering systematically improves accuracy at fixed node count: $\delta = 0.1$ (near-uniform) gives $u_{\min} = -0.351$ (error $8.21\%$), $\delta = 1.0$ gives $-0.356$ (error $7.09\%$), and $\delta = 3.0$ gives $-0.363$ (error $5.16\%$) — a $37\%$ relative improvement at no additional computational cost. The improvement arises because denser near-wall nodes better resolve the steep velocity gradients in the lid and wall boundary layers. Despite this benefit, $\delta = 0.1$ is retained as the default for validation to avoid imposing a tighter CFL constraint on the explicit FSM momentum predictor; the benefit of clustering becomes fully exploitable only with an implicit momentum solver.
+
 
 \subsubsection{Model Validation}
 
-The model is validated at $Re = 1000$ by comparing the steady-state centreline velocity profiles against the reference data of Ghia et al.~\cite{Ghia1982} for two convective schemes: CDS and Hybrid. At this Reynolds number the local Peclet numbers in the core of the cavity are high enough that the choice of scheme has a visible impact on the predicted profile shape, making this a meaningful scheme comparison. The $u$-velocity along the vertical centreline $x = 0.5$ and the $v$-velocity along the horizontal centreline $y = 0.5$ are the standard metrics for this benchmark. The results are presented in Fig.~\ref{figNSVelComp}.
+The model is validated at $Re = 1000$ by comparing the steady-state centreline velocity profiles against the reference data of Ghia et al.~\cite{Ghia1982} for two convective schemes: CDS and Hybrid. The $u$-velocity along the vertical centreline $x = 0.5$ and the $v$-velocity along the horizontal centreline $y = 0.5$ are the standard metrics for this benchmark. The results are presented in Fig.~\ref{figNSVelComp}.
 
 \begin{figure}[ht]
     \centering
-    \includegraphics[width=\linewidth]{Chapter3/Media/LDCSchemeComparison.png}
+    \includegraphics[width=\linewidth]{Chapter3/Media/LDC_scheme_comparison.png}
     \caption{Comparison of computed centreline velocity profiles (CDS and Hybrid) against reference values of Ghia et al.~\cite{Ghia1982} at $Re = 1000$. Left: $u$-velocity along $x = 0.5$. Right: $v$-velocity along $y = 0.5$.}
     \label{figNSVelComp}
 \end{figure}
 
-The steady-state velocity magnitude colormaps and vector maps are shown in Figs.~\ref{figNSVelMag} and~\ref{figNSVelVec}, providing a qualitative picture of the vortex structure for each scheme.
+At $N = 64$, CDS achieves a $u_{\min}$ error of $5.70\%$ against the Ghia reference, while Hybrid reaches $19.24\%$ at the same resolution — a factor of $3.4\times$ difference. CDS benefits from its second-order spatial accuracy wherever $Pe_k \leq 2$. Hybrid is limited by the UDS blending that dominates the high-velocity core, producing numerical diffusion that smears the velocity profile and underestimates the depth of $u_{\min}$.
+
+The steady-state velocity-magnitude fields for CDS at $N = 128$ and $N = 64$ are shown in Figs.~\ref{figNSVelMag} and~\ref{figNSVelHybrid} respectively. Both reproduce the qualitative structure of the cavity flow: a large primary recirculation vortex filling most of the domain, secondary corner vortices at the bottom corners, and thin velocity boundary layers along the lid and side walls. The finer mesh produces a sharper, more compact vortex centre and more distinct corner vortices, consistent with the reduced truncation error at higher resolution.
 
 \begin{figure}[ht]
     \centering
-    \begin{tabular}{cc}
-        \includegraphics[width=0.45\linewidth]{Chapter3/Media/PLACEHOLDER.png} & \includegraphics[width=0.45\linewidth]{Chapter3/Media/PLACEHOLDER.png} \\
-        \scriptsize{\textit{CDS: $Re = 1000$}} & \scriptsize{\textit{Hybrid: $Re = 1000$}} \\
-    \end{tabular}
-    \caption{Steady-state velocity magnitude distribution for the Lid-Driven Cavity at $Re = 1000$, comparing CDS (left) and Hybrid (right).}
+    \includegraphics[width=\linewidth]{Chapter3/Media/LDC_field_N128.png}
+    \caption{Steady-state velocity magnitude $|\mathbf{v}|$ for the Lid-Driven Cavity at $Re = 1000$ (CDS, $N = 128$). Left: velocity magnitude colormap (viridis). Right: streamlines overlaid on the velocity-magnitude background. The primary recirculation vortex, the secondary corner vortices at the bottom corners, and the thin boundary layer along the moving lid are clearly visible.}
     \label{figNSVelMag}
 \end{figure}
 
 \begin{figure}[ht]
     \centering
-    \begin{tabular}{cc}
-        \includegraphics[width=0.45\linewidth]{Chapter3/Media/PLACEHOLDER.png} & \includegraphics[width=0.45\linewidth]{Chapter3/Media/PLACEHOLDER.png} \\
-        \scriptsize{\textit{CDS: $Re = 1000$}} & \scriptsize{\textit{Hybrid: $Re = 1000$}} \\
-    \end{tabular}
-    \caption{Steady-state velocity vector maps for the Lid-Driven Cavity at $Re = 1000$, comparing CDS (left) and Hybrid (right).}
-    \label{figNSVelVec}
+    \includegraphics[width=\linewidth]{Chapter3/Media/LDC_field_N064.png}
+    \caption{Steady-state velocity magnitude $|\mathbf{v}|$ for the Lid-Driven Cavity at $Re = 1000$ (CDS, $N = 64$). Left: velocity magnitude colormap. Right: streamlines overlaid on the velocity-magnitude background. Compared to Fig.~\ref{figNSVelMag}, the coarser mesh produces a slightly more diffuse vortex core and less distinct corner vortices.}
+    \label{figNSVelHybrid}
 \end{figure}
+
+\paragraph{Multi-Reynolds Comparison}
+To assess the solver's ability to capture the physical progression of the cavity flow with increasing Reynolds number, CDS simulations are run at $Re = 100$, $400$, $1000$, and $3200$. Table~\ref{tabLDCMultiRe} summarises the centreline velocity extrema against the Ghia reference; the centreline profiles are shown in Fig.~\ref{figNSMultiRe}.
+
+\begin{table}[ht]
+    \centering
+    \begin{tabular}{|c|c|c|c|c|}
+        \hline
+        $Re$ & $N$ & $u_{\min}$ & Ghia $u_{\min}$ & Error \\
+        \hline
+        100  & 64  & $-0.213$ & $-0.21090$ & $0.91\%$ \\
+        400  & 64  & $-0.322$ & $-0.32726$ & $1.48\%$ \\
+        1000 & 128 & $-0.367$ & $-0.38289$ & $4.13\%$ \\
+        3200 & 128 & $-0.325$ & $-0.51550$ & N/C\textsuperscript{$\dagger$} \\
+        \hline
+    \end{tabular}
+    \caption{Minimum $u$-velocity at $x = 0.5$ for four Reynolds numbers (CDS). \textsuperscript{$\dagger$}The $Re = 3200$ simulation hit the wall-clock limit at $t = 20$ without satisfying the temporal tolerance (N/C = not converged); the reported $u_{\min}$ is a transient snapshot, not a steady-state result, and comparison against the Ghia reference is not meaningful.}
+    \label{tabLDCMultiRe}
+\end{table}
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=\linewidth]{Chapter3/Media/LDC_multi_re.png}
+    \caption{Centreline velocity profiles for $Re = 100$, $400$, $1000$, and $3200$ (CDS), compared against Ghia et al.~\cite{Ghia1982} reference data (black crosses). Left column: $u$-velocity along $x = 0.5$. Right column: $v$-velocity along $y = 0.5$. The $Re = 3200$ case is marked as not converged.}
+    \label{figNSMultiRe}
+\end{figure}
+
+At $Re = 100$ and $400$, the solver matches the Ghia reference closely ($0.91\%$ and $1.48\%$ error respectively): near-Stokes and weakly inertial flows are well-captured at $N = 64$. At $Re = 1000$ the error is $4.13\%$ and the solution is fully converged; the offset reflects the structural FSM perturbation identified in the mesh refinement study. At $Re = 3200$, the simulation ran for approximately 5 hours before reaching the wall-clock limit at $t = 20$ without satisfying the temporal tolerance. The flow was still evolving: $u_{\min} = -0.325$ at $t = 20$ is expected to deepen further toward the Ghia value of $-0.515$ at true steady state.

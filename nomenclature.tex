@@ -1,0 +1,90 @@
+\section*{Nomenclature}
+\addcontentsline{toc}{section}{Nomenclature}
+
+\subsection*{Roman Symbols}
+\begin{tabular}{@{}lll@{}}
+    $A$              & Coefficient matrix of the linear system              & [--] \\
+    $a_P$            & Diagonal coefficient of the discretized equation     & [--] \\
+    $a_k$            & Off-diagonal coefficient for neighbour $k$           & [--] \\
+    $A(|Pe|)$        & Patankar's interpolation function                    & [--] \\
+    $b_P$            & Right-hand side source term                          & [--] \\
+    $c_p$            & Specific heat capacity                               & [J\,kg$^{-1}$K$^{-1}$] \\
+    $D_k$            & Diffusive conductance at face $k$                    & [--] \\
+    $e_N$            & $L_2$ error of the exit profile at mesh level $N$   & [--] \\
+    $F_k$            & Convective mass flux at face $k$                    & [kg\,s$^{-1}$] \\
+    $g$              & Gravitational acceleration                           & [m\,s$^{-2}$] \\
+    $h$              & Convective heat transfer coefficient                  & [W\,m$^{-2}$K$^{-1}$] \\
+    GCI              & Grid Convergence Index                               & [--] \\
+    $H$              & Cavity height / domain characteristic length         & [m] \\
+    $L$              & Domain length                                        & [m] \\
+    $N$              & Number of nodes per side                             & [--] \\
+    $\overline{Nu}$  & Average Nusselt number                               & [--] \\
+    $Nu_\text{max}$  & Maximum local Nusselt number at the hot wall         & [--] \\
+    $p$              & Apparent convergence order                           & [--] \\
+    $P$              & Pressure                                             & [Pa] \\
+    $Pe$             & Cell Péclet number                                   & [--] \\
+    $Pr$             & Prandtl number ($\nu/\alpha$)                        & [--] \\
+    $q_V$            & Volumetric heat generation rate                      & [W\,m$^{-3}$] \\
+    $\dot{q}$        & Heat flux                                            & [W\,m$^{-2}$] \\
+    $Ra$             & Rayleigh number                                      & [--] \\
+    $Re$             & Reynolds number                                      & [--] \\
+    $S_P$            & Source term per unit volume                          & [varies] \\
+    $T$              & Temperature                                          & [K or \textdegree C] \\
+    $t$              & Time                                                 & [s] \\
+    $u$              & Horizontal ($x$-direction) velocity component        & [m\,s$^{-1}$] \\
+    $U$              & Lid velocity (LDC benchmark)                         & [m\,s$^{-1}$] \\
+    $u_\text{min}$   & Minimum $u$-velocity along the vertical centreline   & [m\,s$^{-1}$] \\
+    $v$              & Vertical ($y$-direction) velocity component          & [m\,s$^{-1}$] \\
+    $\mathbf{v}$     & Velocity vector                                      & [m\,s$^{-1}$] \\
+    $V_P$            & Control volume                                       & [m$^3$] \\
+    $x,\,y$          & Spatial coordinates                                  & [m] \\
+\end{tabular}
+
+\subsection*{Greek Symbols}
+\begin{tabular}{@{}lll@{}}
+    $\alpha$                  & Thermal diffusivity ($\lambda/\rho c_p$)         & [m$^2$\,s$^{-1}$] \\
+    $\beta$                   & Thermal expansion coefficient                    & [K$^{-1}$] \\
+    $\delta$                  & Hyperbolic tangent mesh clustering parameter     & [--] \\
+    $\Delta t$                & Time step                                        & [s] \\
+    $\Delta x,\,\Delta y$     & Cell width in $x$- and $y$-direction             & [m] \\
+    $\varepsilon$             & Convergence tolerance                            & [--] \\
+    $\varepsilon_\text{temporal}$ & Temporal steady-state tolerance             & [--] \\
+    $\Gamma$                  & Diffusion coefficient                            & [kg\,m$^{-1}$s$^{-1}$] \\
+    $\lambda$                 & Thermal conductivity                             & [W\,m$^{-1}$K$^{-1}$] \\
+    $\mu$                     & Dynamic viscosity                                & [Pa\,s] \\
+    $\nu$                     & Kinematic viscosity ($\mu/\rho$)                 & [m$^2$\,s$^{-1}$] \\
+    $\rho$                    & Density                                          & [kg\,m$^{-3}$] \\
+    $\phi$                    & General transported scalar variable              & [--] \\
+    $\omega$                  & BiCGSTAB local-minimisation step length          & [--] \\
+\end{tabular}
+
+\subsection*{Subscripts and Superscripts}
+\begin{tabular}{@{}ll@{}}
+    $P,\,W,\,E,\,S,\,N$    & Cell centre node and its four cardinal neighbours \\
+    $w,\,e,\,s,\,n$        & West, east, south, north cell faces \\
+    $h,\,c$                & Hot wall, cold wall (DHC) \\
+    $\text{ref}$           & Reference value \\
+    $\infty$               & Far-field fluid value or Richardson-extrapolated limit \\
+    $n,\,n+1$              & Current and next time level \\
+    $k$                    & Face index \\
+\end{tabular}
+
+\subsection*{Abbreviations}
+\begin{tabular}{@{}ll@{}}
+    BC       & Boundary Condition \\
+    BiCGSTAB & Bi-Conjugate Gradient Stabilized (linear solver) \\
+    CDS      & Central Difference Scheme \\
+    CFD      & Computational Fluid Dynamics \\
+    CG       & Conjugate Gradient (linear solver) \\
+    DHC      & Differentially Heated Cavity \\
+    FSM      & Fractional Step Method \\
+    FVM      & Finite Volume Method \\
+    GCI      & Grid Convergence Index \\
+    GS       & Gauss-Seidel (linear solver) \\
+    HT       & Heat Transfer \\
+    LDC      & Lid-Driven Cavity \\
+    NS       & Navier-Stokes \\
+    SH       & Smith-Hutton \\
+    SPD      & Symmetric Positive Definite \\
+    UDS      & Upwind Difference Scheme \\
+\end{tabular}

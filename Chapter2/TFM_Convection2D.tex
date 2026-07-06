@@ -1,15 +1,15 @@
 \subsection{2D Convection-Diffusion - Smith-Hutton Case}~\label{secConvection2D}
-The Smith-Hutton problem~\cite{SmithHutton1982} is a widely used benchmark for convection-diffusion schemes. It consists of a rectangular domain $[-1, 1] \times [0, 1]$ subject to a prescribed, analytically divergence-free velocity field:
+The Smith-Hutton problem~\cite{SmithHutton1982, CTTC2022Part4} is a widely used benchmark for convection-diffusion schemes. It consists of a rectangular domain $[-1, 1] \times [0, 1]$ subject to a prescribed, analytically divergence-free velocity field:
 
 \begin{equation}~\label{eqSHVelocity}
     u = 2y(1 - x^2), \qquad v = -2x(1 - y^2)
 \end{equation}
 
-This velocity field generates a circular flow that enters along the bottom from the left, sweeps across the domain, curves upward near the east boundary, and returns from right to left along the top. Because $\nabla \cdot \mathbf{v} = 0$ is satisfied analytically, the discrete continuity correction term in Eq.~\eqref{eqConv_ap} vanishes exactly, making this a clean test of the convective discretisation alone. A schematic of the problem is shown in Fig.~\ref{figSHDomain}.
+This velocity field generates a circular flow that enters along the bottom from the left, sweeps across the domain the domain and exits through the bottom from the right. Because $\nabla \cdot \mathbf{v} = 0$ is satisfied analytically, the discrete continuity correction term in Eq.~\eqref{eqConv_ap} vanishes exactly, making this a clean test of the convective discretisation alone. A schematic of the problem is shown in Fig.~\ref{figSHDomain}.
 
 \begin{figure}[ht]
     \centering
-    \includegraphics[width=0.45\linewidth]{Chapter2/Media/PLACEHOLDER.png}
+    \includegraphics[width=0.45\linewidth]{Chapter2/Media/SchematicSmithHutton.png}
     \caption{Smith-Hutton problem domain and velocity streamlines~\cite{SmithHutton1982}.}
     \label{figSHDomain}
 \end{figure}
@@ -17,7 +17,7 @@ This velocity field generates a circular flow that enters along the bottom from 
 The transport variable $\phi$ represents a passive scalar carried by the flow. Boundary conditions are:
 
 \begin{itemize}
-    \item \textbf{South inlet} ($y = 0,\ -1 \leq x \leq 0$): Dirichlet profile $\phi = 1 + \tanh\!\bigl(10(2x + 1)\bigr)$, which ramps from $0$ at $x = -1$ through $1$ at $x = -0.5$ to $2$ at $x = 0$.
+    \item \textbf{South inlet} ($y = 0,\ -1 \leq x \leq 0$): Dirichlet profile $\phi = 1 + \tanh\!\bigl(10(2x + 1)\bigr)$, which ramps from $0$ at $x = -1$ to $2$ at $x = 0$.
     \item \textbf{South outlet} ($y = 0,\ 0 \leq x \leq 1$): Neumann zero-gradient $\partial \phi / \partial n = 0$.
     \item \textbf{All remaining walls}: Dirichlet $\phi = 0$.
 \end{itemize}
@@ -28,7 +28,7 @@ The steep inlet profile makes this a demanding benchmark: a high-order scheme mu
 \subsubsection{Model Implementation}
 The convection-diffusion solver is built on the same modular architecture as Chapter~\ref{chapDiffusion}, extending it with three key additions. First, the velocity field is no longer a fixed parameter but a prescribed analytical input: the two components $u$ and $v$ are specified as mathematical expressions in the configuration file, which are parsed and evaluated at each cell face during the assembly of the convective fluxes $F_k$. This approach keeps the model general, allowing any analytically defined, divergence-free velocity field to be tested without modifying the source code. Second, ghost nodes are used at all domain boundaries (see Section~\ref{chapConvection}) instead of the half-cell wall treatment of Chapter~\ref{chapDiffusion}, enabling a consistent treatment of both the diffusive and convective face fluxes. Third, a new Boundary probe type was added to the Probe class, which records $\phi$ along a specified boundary face at each saved time-step; this is required for the Smith-Hutton validation, which compares the exit profile at the south outlet.
 
-A summary of all configuration parameters for this model is shown in Table~\ref{tabConfigConv}. Compared to the previous chapter, the main additions are the \textbf{spatScheme} parameter for the convective scheme, the \textbf{velocityField} entry for the analytical velocity expressions, and the \textbf{medicOn} flag that activates the diagnostic tool.
+A summary of the new configuration parameters for this model is shown in Table~\ref{tabConfigConv}. Compared to the previous chapter, the main additions are the \textbf{spatScheme} parameter for the convective scheme, the \textbf{velocityField} entry for the analytical velocity expressions, and the \textbf{medicOn} flag that activates the diagnostic tool.
 
 \begin{table}[ht]
 	\centering
@@ -36,35 +36,11 @@ A summary of all configuration parameters for this model is shown in Table~\ref{
 		\hline
 		Group & Parameter & Description \\
 		\hline
-		\multirow{8}{*}{Numerical Data} & tempScheme & Temporal scheme selection for simulation. \\
-            & spatScheme & Convective scheme selection for simulation. \\
-            & solver & Solver algorithm for simulation. \\
-			& tolNumeric & Tolerance for the numerical solver. \\
-			& tolTemporal & Tolerance for the steady-state convergence. \\
-			& maxIterations & Limit of iterations per time-step. \\
-			& endTime & Last instant of the simulation. \\
-			& timeStep & Time increment after each instant. \\
+		Numerical Data & spatScheme & Convective scheme selection for simulation. \\
 		\hline
-		\multirow{4}{*}{Physical Data} & T0 & Initial value for $\phi$ over the domain. \\
-					       & \multirow{2}{*}{materials} & List of vectors with thermophysical properties corresponding to each material. \\
-                           & velocityField & Mathematical expressions for each velocity component. \\
+        \multirow{2}{*}{Physical Data} & \multirow{2}{*}{velocityField} & Mathematical expressions for each velocity component. \\
 		\hline
-		\multirow{5}{*}{Geometrical Data} & width & Dimension of the domain in the secondary axis. \\
-						  & \multirow{4}{*}{sections} & List of vectors indicating the material distribution. Also includes node count and internal source. \\
-		\hline
-		\multirow{9}{*}{Mesh Data} & strength & Cubic algebraic mesh parameter. \\
-					   & centering & Cubic algebraic mesh parameter. \\
-					   & kappa & Power law mesh parameter. \\
-					   & delta & Hyperbolic tangent mesh parameter. \\
-					   & meshAlgorithm & Algorithm for mesh generation. \\
-					   & \multirow{2}{*}{N} & List specifying total number of nodes for each axis. \\
-					   & \multirow{2}{*}{refinement} & List of vectors specifying refinement configuration for each axis. \\
-		\hline
-		\multirow{2}{*}{Boundary Data} & \multirow{2}{*}{boundaries} & List of vectors specifying the boundary conditions on each side. \\
-		\hline
-		\multirow{2}{*}{Probe Data} & \multirow{2}{*}{probes} & List of vectors specifying the probes configured for the simulation. \\
-		\hline
-        Medic Data & medicOn & Control argument for the diagnostic tool. \\
+        Medic Data & medicOn & Diagnostic tool control parameter. \\
         \hline
 	\end{tabular}
 	\caption{Configuration file structure for the convection-diffusion model, highlighting the new parameters introduced in this chapter.}
@@ -96,7 +72,7 @@ The introduction of the convective term breaks the symmetry of the coefficient m
         \EndIf
         \State $\beta_k \gets \dfrac{\hat{\mathbf{r}} \cdot \mathbf{r}^{k+1}}{\hat{\mathbf{r}} \cdot \mathbf{r}^k} \cdot \dfrac{\alpha_k}{\omega_k}$
         \State $\mathbf{p}^{k+1} \gets \mathbf{r}^{k+1} + \beta_k(\mathbf{p}^k - \omega_k A\mathbf{p}^k)$
-    \EndFor
+    \EndFor \\
     \Return $\boldsymbol{\phi}$
 \end{algorithmic}
 \end{algorithm}
@@ -121,46 +97,75 @@ Before the full scheme comparison can be run under controlled conditions, a work
 \end{table}
 
 \paragraph{Mesh Refinement}
-The Smith-Hutton problem is solved at four progressively finer uniform meshes using the Hybrid scheme and $\rho/\Gamma = 10^3$. Since no closed-form analytical solution exists, the $L_2$ error of the exit profile $\phi(x,\, y=0)$ for $0 \leq x \leq 1$ is computed against the reference values of Smith and Hutton~\cite{SmithHutton1982}:
+The Smith-Hutton problem is solved at four progressively finer uniform meshes using the Hybrid scheme at the most demanding regime $\rho/\Gamma = 10^6$, where convection fully dominates. Since no closed-form analytical solution exists, the $L_2$ error of the exit profile $\phi(x,\, y=0)$ for $0 \leq x \leq 1$ is computed against the Smith and Hutton reference~\cite{SmithHutton1982}:
 
 \begin{equation}~\label{eqSHL2}
     e_N = \left\| \phi_{\mathrm{num}} - \phi_{\mathrm{ref}} \right\|_2 = \sqrt{\frac{1}{N_{\mathrm{out}}} \sum_{i} (\phi_i - \phi_{\mathrm{ref},i})^2}
 \end{equation}
 
-where $N_{\mathrm{out}}$ is the number of outlet nodes used in the comparison. The left panel of Fig.~\ref{figConvRefinement} shows the evolution of the exit profile as $N$ increases; the right panel is a log-log plot of $e_N$ against the mesh spacing $h = 2/N_x$, from which the spatial order of convergence can be read off by comparing against the reference slope lines.
+where $N_{\mathrm{out}}$ is the number of outlet nodes used in the comparison. The left panel of Fig.~\ref{figConvRefinement} shows the evolution of the exit profile as $N$ increases; the right panel plots $e_N$ on a log-log scale against the mesh spacing $h = 2/N_x$.
 
 \begin{figure}[ht]
     \centering
-    \includegraphics[width=\linewidth]{Chapter2/Media/SHRefine.png}
-    \caption{Mesh refinement study for the Smith-Hutton case ($\rho/\Gamma = 10^3$, Hybrid). Left: exit profile $\phi(x, 0)$ for each mesh level. Right: $L_2$ error against mesh spacing $h = 2/N_x$; reference slope lines indicate first- and second-order convergence rates.}
+    \includegraphics[width=\linewidth]{Chapter2/Media/SH_refine.png}
+    \caption{Mesh refinement study for the Smith-Hutton case ($\rho/\Gamma = 10^6$, Hybrid). Left: exit profile $\phi(x, 0)$ for each mesh level, compared against the Smith and Hutton reference. Right: $L_2$ error against mesh spacing $h = 2/N_x$; reference slope lines indicate first- and second-order convergence rates.}
     \label{figConvRefinement}
+\end{figure}
+
+The computed errors decrease from $e_{16} = 0.457$ to $e_{128} = 0.165$, yielding an apparent convergence order $p \approx 0.46$ — close to first order rather than the second-order formal accuracy of Hybrid. The reason is that at $\rho/\Gamma = 10^6$ the local Péclet number $Pe_k \gg 2$ across virtually the entire domain, so the scheme reverts to UDS everywhere and the solution carries first-order numerical diffusion along streamlines. True second-order convergence would require CDS with $Pe_k \leq 2$, which is unachievable at this Péclet regime for any practical mesh. The resolution $N = 64$ is selected for subsequent validation runs as the level at which the exit profile has stabilised in shape. Figure~\ref{figConvRefinementMulti} extends the mesh comparison to both UDS and Hybrid; CDS is excluded because it diverges at $\rho/\Gamma = 10^6$ (see Table~\ref{tabConvNumerical}).
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=\linewidth]{Chapter2/Media/SH_refine_multischeme.png}
+    \caption{Multi-scheme mesh convergence at $\rho/\Gamma = 10^6$ (UDS and Hybrid; CDS excluded due to instability at $Pe_k \gg 2$). Left: exit profile $\phi(x, 0)$ at $N = 128$ for each scheme, compared against the analytical reference $\phi_\mathrm{ref}(x) = 1 + \tanh\!\bigl(10(1-2x)\bigr)$. Right: log-log $L_2$ error vs.\ mesh spacing $h$; both schemes converge at approximately first order.}
+    \label{figConvRefinementMulti}
 \end{figure}
 
 
 \subsubsection{Model Validation}
-The model is validated by running the Smith-Hutton problem for three convective schemes — CDS, UDS, and Hybrid — across all three values of $\rho/\Gamma$, using the mesh resolution established by the refinement study. The three schemes represent different points in the accuracy-stability trade-off described in Table~\ref{tabConvSchemes}: CDS is second-order accurate but loses diagonal dominance for $|Pe_k| > 2$, which causes oscillations; UDS maintains diagonal dominance at all Peclet numbers but is only first-order accurate; and the Hybrid scheme applies CDS where $|Pe_k| \leq 2$ and switches to UDS above that threshold. This range of behaviours is expected to produce clearly different exit profiles as $\rho/\Gamma$ increases and convection becomes dominant.
+The model is validated by running the Smith-Hutton problem for three convective schemes — CDS, UDS, and Hybrid — across all three values of $\rho/\Gamma$, using the mesh resolution established by the refinement study. The three schemes represent different points in the accuracy-stability trade-off described in Table~\ref{tabConvSchemes}: CDS is second-order accurate but loses diagonal dominance for $|Pe_k| > 2$; UDS maintains diagonal dominance at all Péclet numbers at the cost of first-order accuracy; and the Hybrid scheme switches between the two at $|Pe_k| = 2$.
 
-For each $\rho/\Gamma$ case, two quantities are reported: the number of inner solver iterations and the final residual, which assess convergence and stability; and the exit profile $\phi(x,\, y=0)$, which is compared directly against the reference values~\cite{SmithHutton1982}. The steady-state $\phi$ colormaps for all three schemes are also provided to give a visual assessment of the transport behaviour and to expose the CDS divergence at high Peclet numbers. The results are presented in Figs.~\ref{figConvNumerical},~\ref{figConvSH}, and~\ref{figConvUDS}.
+Solver performance at the first time step is summarised in Table~\ref{tabConvSHResults}, and the exit profiles $\phi(x,\, y=0)$ are compared against the reference values~\cite{SmithHutton1982} in Figs.~\ref{figConvSH} and~\ref{figConvUDS}. At $\rho/\Gamma = 10$, CDS and Hybrid require identical iteration counts (125) because $Pe_k \ll 2$ everywhere, so Hybrid applies CDS throughout and the two schemes produce the same linear system; UDS differs slightly (127 iterations) due to its upwind-biased coefficients. At $\rho/\Gamma = 10^3$, UDS is the fastest to converge (108 iterations) because upwinding reinforces diagonal dominance; Hybrid requires 117 iterations; CDS exceeds the solver iteration limit on the first step as the large off-diagonal convective coefficients make the system ill-conditioned, though the solution recovers by the third time step. At $\rho/\Gamma = 10^6$, CDS diverges numerically; UDS and Hybrid converge in 115 and 122 iterations respectively, with larger absolute residuals reflecting the large magnitude of the convective right-hand side rather than poor convergence — the relative residuals satisfy the $10^{-8}$ tolerance in both cases.
 
-\begin{figure}[ht]
+\begin{table}[ht]
     \centering
-    \begin{tabular}{cc}
-        \includegraphics[width=0.45\linewidth]{Chapter2/Media/IterConv.png} & \includegraphics[width=0.45\linewidth]{Chapter2/Media/ResidueConv.png} \\
+    \begin{tabular}{|c|c|c|c|}
+        \hline
+        $\rho/\Gamma$ & Scheme & Iterations (step 1) & $\|\mathbf{r}\|$ (step 1) \\
+        \hline
+        \multirow{3}{*}{$10^1$} & CDS    & 125 & $1.59\times10^{-7}$ \\
+                                & UDS    & 127 & $6.26\times10^{-8}$ \\
+                                & Hybrid & 125 & $1.59\times10^{-7}$ \\
+        \hline
+        \multirow{3}{*}{$10^3$} & CDS    & $>$1999\textsuperscript{$\dagger$} & $6.59\times10^{-4}$ \\
+                                & UDS    & 108 & $6.56\times10^{-7}$ \\
+                                & Hybrid & 117 & $9.77\times10^{-7}$ \\
+        \hline
+        \multirow{3}{*}{$10^6$} & CDS    & \multicolumn{2}{c|}{Diverged} \\
+                                & UDS    & 115 & $4.28\times10^{-4}$ \\
+                                & Hybrid & 122 & $7.24\times10^{-4}$ \\
+        \hline
     \end{tabular}
-    \caption{Number of iterations (left) and solver residual (right) for the three convective schemes across all $\rho/\Gamma$ cases.}
-    \label{figConvNumerical}
-\end{figure}
+    \caption{BiCGSTAB iterations and absolute residual $\|\mathbf{r}\|$ at the first time step for all three convective schemes across the three $\rho/\Gamma$ cases ($N = 64$). \textsuperscript{$\dagger$}CDS at $\rho/\Gamma = 10^3$ hits the solver iteration limit on step 1 due to the ill-conditioned system; the residual shown is after 1999 iterations. The solution recovers by step 3.}
+    \label{tabConvSHResults}
+\end{table}
 
 \begin{figure}[ht]
     \centering
-    \includegraphics[width=\linewidth]{Chapter2/Media/SHSchemeComparison.png}
+    \includegraphics[width=\linewidth]{Chapter2/Media/SH_scheme_comparison.png}
     \caption{Exit profile $\phi(x, 0)$ for CDS, UDS, and Hybrid compared against the reference of Smith and Hutton~\cite{SmithHutton1982} at each $\rho/\Gamma$ case. For $\rho/\Gamma = 10^6$ the reference corresponds to the $Pe \to \infty$ limit.}
     \label{figConvSH}
 \end{figure}
 
 \begin{figure}[ht]
     \centering
-    \includegraphics[width=\linewidth]{Chapter2/Media/SHSchemeFields.png}
+    \includegraphics[width=\linewidth]{Chapter2/Media/SH_scheme_fields.png}
     \caption{Steady-state $\phi$ field for UDS (left column), Hybrid (centre column), and CDS (right column) across all three $\rho/\Gamma$ cases (rows). At $\rho/\Gamma = 10^6$ the CDS solution has diverged and is shown at the scale of the numerical overflow.}
     \label{figConvUDS}
 \end{figure}
+
+At $\rho/\Gamma = 10$ the three schemes produce nearly identical exit profiles: diffusion is strong enough to homogenise any interpolation differences, and all results agree well with the Smith and Hutton reference.
+
+As convection intensifies at $\rho/\Gamma = 10^3$, scheme differences become clearly visible. UDS smears the steep inlet gradient due to first-order numerical diffusion, producing a flatter outlet profile with the peak near $x = 0$ underestimated. Hybrid recovers some sharpness by applying CDS in low-Péclet regions, but reverts to UDS in the high-velocity core, limiting its improvement. CDS, remaining second-order throughout, tracks the reference profile most closely and produces the sharpest outlet gradient.
+
+At $\rho/\Gamma = 10^6$, the local Péclet number far exceeds 2 on every cell face for any practical mesh. The CDS coefficient $A(|Pe|) = 1 - 0.5|Pe|$ becomes strongly negative, breaking diagonal dominance; the solver diverges, as visible in the right column of Fig.~\ref{figConvUDS} where the field is shown at the scale of numerical overflow. Among the stable schemes, UDS produces a near-flat outlet profile that barely reproduces the shape of the analytical reference $\phi_\mathrm{ref}(x) = 1 + \tanh(10(1-2x))$ for $Pe \to \infty$. Hybrid remains stable by construction and yields a sharper profile than UDS, but still under-captures the steep gradient near $x = 0$ because first-order UDS blending dominates the entire domain at this Péclet level.

@@ -5,7 +5,6 @@
 
 % Language and font encodings
 \usepackage[english]{babel} %spanish, english, ...
-\usepackage{lipsum}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 \usepackage{parskip}
@@ -28,6 +27,7 @@
 \usepackage{wrapfig}
 \usepackage[colorinlistoftodos]{todonotes}
 \usepackage[colorlinks=true, allcolors=blue]{hyperref}
+\usepackage{notoccite}
 \usepackage{titlesec}
 \usepackage{fancyhdr}
 \usepackage[firstpage]{draftwatermark}
@@ -52,7 +52,7 @@
 
 %% Caps de pagina i peus (E/O (even/odd), L/C/R (left/center/right) y H/F (header/footer))
 \fancyhf{}
-\fancyhead[ER]{Memòria}
+\fancyhead[ER]{Report}
 \fancyhead[OL]{Numerical simulation of convection heat transfer problems using CFD \& HT techniques}
 \fancyhf[ELH, ORH]{pàg. \thepage}
 %\fancyfoot[C]{}
@@ -124,12 +124,10 @@
 
 
 
-% HAVEN'T DONE THIS YET
 % \appendix
 % \include{app1/app1}
 
-% \refstepcounter{chapter}
-% \include{nomenclature}
+\include{nomenclature}
 
 
 \end{document}
