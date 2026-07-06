@@ -62,7 +62,7 @@ Four uniform meshes are swept for both the CDS and Hybrid schemes at $Re = 1000$
     \label{tabLDCRefine}
 \end{table}
 
-The CDS results, shown in Fig.~\ref{figLDCRefinement}, exhibit second-order convergence ($p = 2.00$), consistent with the formal accuracy of the scheme. The grid convergence index (GCI) at $N = 128$ is $0.68\%$, confirming that the finest-mesh solution is well-resolved. The extrapolated limit $u_{\min}^\infty = -0.369$ lies $3.60\%$ below the Ghia reference of $-0.38289$. This residual offset is structural: Ghia et al.\ used a stream-function/vorticity formulation that eliminates pressure entirely, whereas the FSM pressure-correction step introduces a small systematic perturbation to the velocity field that does not vanish with mesh refinement.
+The CDS results, shown in Fig.~\ref{figLDCRefinement}, exhibit second-order convergence ($p = 2.00$), consistent with the formal accuracy of the scheme. The grid convergence index (GCI)~\cite{Roache1994} at $N = 128$ is $0.68\%$, confirming that the finest-mesh solution is well-resolved. The extrapolated limit $u_{\min}^\infty = -0.369$ lies $3.60\%$ below the Ghia reference of $-0.38289$. This residual offset is structural: Ghia et al.\ used a stream-function/vorticity formulation that eliminates pressure entirely, whereas the FSM pressure-correction step introduces a small systematic perturbation to the velocity field that does not vanish with mesh refinement.
 
 \begin{figure}[ht]
     \centering

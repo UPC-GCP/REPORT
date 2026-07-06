@@ -48,7 +48,7 @@ The model implementation was designed to work using a configuration file that in
 
 
 \subsubsection{Temporal Scheme}
-One of the first numerical parameters to be evaluated in this project is the temporal scheme. This parameter determines the relevance that each time-step will have in the calculation of the next one. The \textbf{explicit} scheme, relies exclusively on information available from the current time-step, described as a function $f(T^{n-1})$ and requires a small enough time-step to ensure stability, given by Eq.~\eqref{eqDifftExplicit1D}. On the other hand, the \textbf{implicit} scheme relies exclusively on information from the time-step being currently calculated, being a function of $f(T^n)$. Finally, the \textbf{Crank-Nicolson} scheme employs a second-order scheme that averages the estimation made by both the explicit and implicit temporal schemes, being a function of $f(0.5 (T^{n-1} + T^n))$. 
+One of the first numerical parameters to be evaluated in this project is the temporal scheme. This parameter determines the relevance that each time-step will have in the calculation of the next one. The \textbf{explicit} scheme, relies exclusively on information available from the current time-step, described as a function $f(T^{n-1})$ and requires a small enough time-step to ensure stability, given by Eq.~\eqref{eqDifftExplicit1D}~\cite{Versteeg2007}. On the other hand, the \textbf{implicit} scheme relies exclusively on information from the time-step being currently calculated, being a function of $f(T^n)$. Finally, the \textbf{Crank-Nicolson} scheme employs a second-order scheme that averages the estimation made by both the explicit and implicit temporal schemes, being a function of $f(0.5 (T^{n-1} + T^n))$. 
 
 \begin{equation}~\label{eqDifftExplicit1D}
     \Delta t_{max} = \frac{\Delta x^2}{2 \alpha}
@@ -69,7 +69,7 @@ An additional decision to make when solving this kind of problems is the numeric
 
 
 \paragraph{Gauss-Seidel}
-The GS method solves linear systems by iteratively cycling through each node in sequence and updating them by using the most recent values from its adjacent nodes. Each cell needs to be calculated directly by using Eq.~\eqref{eqSolverGS}, which delays the propagation of information from one cell to the others. While convergence is a guarantee when the matrix is diagonally dominant, it is susceptible to mesh size as it will directly impact the number of operations.
+The GS method solves linear systems by iteratively cycling through each node in sequence and updating them by using the most recent values from its adjacent nodes. Each cell needs to be calculated directly by using Eq.~\eqref{eqSolverGS}, which delays the propagation of information from one cell to the others. While convergence is a guarantee when the matrix is diagonally dominant, it is susceptible to mesh size as it will directly impact the number of operations~\cite{Versteeg2007}.
 
 \begin{equation}~\label{eqSolverGS}
     T^{n+1}_P = \frac{1}{a_P} \left( b_P - \sum_{k \neq P} a_k T^*_{k} \right)
@@ -96,7 +96,7 @@ The GS method solves linear systems by iteratively cycling through each node in 
 
 
 \paragraph{Conjugate Gradient}
-The CG method is an iterative Krylov subspace solver designed specifically for Symmetric Positive Definite (SPD) systems. For heat conduction problems, this matches the diffusion coefficient matrix since the interaction between two adjacent nodes is identical in both directions (symmetrical) and is diagonally dominant due to the accumulation term in $a_P$ (positive definite). Contrary to the GS method, rather than updating the values one by one, CG minimizes the residual over the sequence of search directions $\mathbf{p}_k$ that are mutually $A$-conjugate:
+The CG method is an iterative Krylov subspace solver designed specifically for Symmetric Positive Definite (SPD) systems~\cite{Versteeg2007, Ferziger2002}. For heat conduction problems, this matches the diffusion coefficient matrix since the interaction between two adjacent nodes is identical in both directions (symmetrical) and is diagonally dominant due to the accumulation term in $a_P$ (positive definite). Contrary to the GS method, rather than updating the values one by one, CG minimizes the residual over the sequence of search directions $\mathbf{p}_k$ that are mutually $A$-conjugate:
 
 \begin{equation}~\label{eqSolverCG}
     \mathbf{p}^T_i A \mathbf{p}_j = 0, \qquad i \neq j

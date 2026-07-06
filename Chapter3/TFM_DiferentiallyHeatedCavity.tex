@@ -9,7 +9,7 @@ The Differentially Heated Cavity (DHC) extends the NS solver to thermally driven
     \label{figDHCSchematic}
 \end{figure}
 
-The density variation is handled through the \textbf{Boussinesq approximation}, which treats the fluid as incompressible everywhere except in the buoyancy term of the momentum equation, where a linear dependence of density on temperature is assumed:
+The density variation is handled through the \textbf{Boussinesq approximation}~\cite{Shames2003}, which treats the fluid as incompressible everywhere except in the buoyancy term of the momentum equation, where a linear dependence of density on temperature is assumed:
 
 \begin{equation}\label{eqBoussinesq}
     \rho \approx \rho_0\,\bigl[1 - \beta\,(T - T_\mathrm{ref})\bigr]
@@ -92,7 +92,7 @@ The average Nusselt number $\overline{Nu}$ at the hot wall is computed for each 
     \label{tabDHCRefine}
 \end{table}
 
-Richardson extrapolation over the three finest meshes yields an apparent order $p = 1.60$ and an extrapolated value $\overline{Nu}^\infty = 4.536$, which lies within $0.38\%$ of the de Vahl Davis reference. The intermediate order ($1 < p < 2$) is consistent with the Hybrid scheme: near the hot and cold walls where $Pe_k \leq 2$, the scheme applies CDS and achieves second-order accuracy in resolving the thermal boundary layers; in the convective core where $Pe_k > 2$, first-order UDS dominates. The GCI at $N = 128$ is $1.27\%$, confirming adequate grid convergence. The mesh $N = 64$ is used for $Ra = 10^3$ and $10^4$; $N = 128$ is used for $Ra = 10^5$ and $10^6$ to maintain comparable boundary-layer resolution as the thermal layer thickness $\delta_T \sim Ra^{-1/4}$ decreases.
+Richardson extrapolation over the three finest meshes yields an apparent order $p = 1.60$ and an extrapolated value $\overline{Nu}^\infty = 4.536$, which lies within $0.38\%$ of the de Vahl Davis reference. The intermediate order ($1 < p < 2$) is consistent with the Hybrid scheme: near the hot and cold walls where $Pe_k \leq 2$, the scheme applies CDS and achieves second-order accuracy in resolving the thermal boundary layers; in the convective core where $Pe_k > 2$, first-order UDS dominates. The GCI~\cite{Roache1994} at $N = 128$ is $1.27\%$, confirming adequate grid convergence. The mesh $N = 64$ is used for $Ra = 10^3$ and $10^4$; $N = 128$ is used for $Ra = 10^5$ and $10^6$ to maintain comparable boundary-layer resolution as the thermal layer thickness $\delta_T \sim Ra^{-1/4}$~\cite{Incropera2006} decreases.
 
 
 \subsubsection{Model Validation}
@@ -115,7 +115,7 @@ The model is validated across all four Rayleigh number cases using the mesh reso
     \label{tabDHCBenchmark}
 \end{table}
 
-The error in $\overline{Nu}$ remains below $1\%$ for $Ra \leq 10^5$ and rises to $2.71\%$ at $Ra = 10^6$. The degradation at high $Ra$ is expected: the thermal boundary layer thickness scales as $\delta_T \sim Ra^{-1/4}$, so at $Ra = 10^6$ it spans only a few cells even at $N = 128$, and the Hybrid scheme's first-order UDS blending in the convective core limits the resolution of the steep near-wall temperature gradients that drive $\overline{Nu}$. The visualisation of $\overline{Nu}$ across all four cases is shown in Fig.~\ref{figDHCNu}, and the local distribution $Nu_{\mathrm{local}}(y)$ along the hot wall at $Ra = 10^5$ is shown in Fig.~\ref{figDHCNuLocal}.
+The error in $\overline{Nu}$ remains below $1\%$ for $Ra \leq 10^5$ and rises to $2.71\%$ at $Ra = 10^6$. The degradation at high $Ra$ is expected: the thermal boundary layer thickness scales as $\delta_T \sim Ra^{-1/4}$~\cite{Incropera2006}, so at $Ra = 10^6$ it spans only a few cells even at $N = 128$, and the Hybrid scheme's first-order UDS blending in the convective core limits the resolution of the steep near-wall temperature gradients that drive $\overline{Nu}$. The visualisation of $\overline{Nu}$ across all four cases is shown in Fig.~\ref{figDHCNu}, and the local distribution $Nu_{\mathrm{local}}(y)$ along the hot wall at $Ra = 10^5$ is shown in Fig.~\ref{figDHCNuLocal}.
 
 \begin{figure}[ht]
     \centering
